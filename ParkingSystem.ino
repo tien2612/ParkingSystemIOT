@@ -1,100 +1,127 @@
 #include <Arduino.h>
+#include <HCSR04.h>
 
-#define RED_COLOR     0
-#define YELLOW_COLOR  1
-#define GREEN_COLOR   2
+#include "myColor.h"
+#include "user_RFID.h"
+#include "user_Slot.h"
+//#include "user_Slot.h"
 
-/* Define pinout */
-int red = 7;
-int green = 6;
-int blue = 5;
-int en1 = 4;
-int en2 = 3;
-int en3 = 2;
 /* Index of led RGB */
-int i = 0; 
-int color_En1 = RED_COLOR;
-int color_En2 = GREEN_COLOR;
-int color_En3 = YELLOW_COLOR;
+int index = 0;
+slot_status slot_car_status[N0_NODE_CAR];
 
-/* Struct of array contains color of led */
-struct ledColor {
-  int color[3];
-};
 
-ledColor led_color[3];
+/* Declare car slot infor */
 
-/* Update color of ledRGB controlled by en */
-void updateColorIndex(int &en, int color) {
-  en = color;
-}
-/* Initiate the corresponding three colors */
-void initLED() {
-  for (int i = 0; i < 3; i++) {
-    led_color[RED_COLOR].color[0] = 0;
-    led_color[RED_COLOR].color[1] = 1;
-    led_color[RED_COLOR].color[2] = 1;
+/* HC-SR04 pin-out*/
+/* initialisation class HCSR04 (trig pin , echo pin, number of sensor) */
+HCSR04 hc(2, new int[2]{4, 6}, 2);
+unsigned long int currentMillis = 0;
 
-    led_color[GREEN_COLOR].color[0] = 1;
-    led_color[GREEN_COLOR].color[1] = 0;
-    led_color[GREEN_COLOR].color[2] = 1;
-
-    led_color[YELLOW_COLOR].color[0] = 0;
-    led_color[YELLOW_COLOR].color[1] = 0;
-    led_color[YELLOW_COLOR].color[2] = 1;
+void init_slot() {
+  for (int i = 0; i < N0_NODE_CAR; i++) {
+    slot_car_status[i].startMillisCar = millis();
+    slot_car_status[i].distance = UNDEFINED;
+    slot_car_status[i].flag_checking_slot = false;
+    slot_car_status[i].doneChecking = false;
+    slot_car_status[i].status = SLOT_EMPTY;
   }
 }
-/* Make color for LED */
-void writeLed(int color) {
-    digitalWrite(red,   led_color[color].color[0]);
-    digitalWrite(green, led_color[color].color[1]);
-    digitalWrite(blue,  led_color[color].color[2]);
+
+void check_slot_status() {
+  for (int i = 0; i < N0_NODE_CAR; i++) {
+    if (slot_car_status[i].distance <= 5 && slot_car_status[i].flag_checking_slot == false) {
+      slot_car_status[i].startMillisCar = currentMillis;
+      slot_car_status[i].flag_checking_slot = true;
+      slot_car_status[i].doneChecking = false;
+    } else if (slot_car_status[i].distance > 5) {
+      slot_car_status[i].status = SLOT_EMPTY;
+      slot_car_status[i].flag_checking_slot = false;
+    }
+    
+    if (slot_car_status[i].doneChecking == false) {
+
+      if (slot_car_status[i].flag_checking_slot && (currentMillis - slot_car_status[i].startMillisCar >= TIME_VALID)){  
+        slot_car_status[i].doneChecking = true;
+        slot_car_status[i].flag_checking_slot = false;
+        slot_car_status[i].status = SLOT_FULL;
+        Serial.println(slot_car_status[0].status);
+      } else {
+        slot_car_status[i].status = SLOT_EMPTY;
+      }
+      
+    }
+  }
 }
 
-/* Make color for each index of LED */
-void ledRGB(int index, int color_en1, int color_en2, int color_en3) {
-  switch(index) {
-    case 0:
-      digitalWrite(en1, 0);
-      digitalWrite(en2, 1);
-      digitalWrite(en3, 1);
-      writeLed(color_en1);
+void get_car_distance() {
+  for (int i = 0; i < N0_NODE_CAR; i++)      {
+    slot_car_status[i].distance = hc.dist(i);
+  }
+  delay(60);
+}
+
+void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
+  switch (status_slot) {
+    case SLOT_EMPTY:
+      updateColorIndex(colorEn, GREEN_COLOR);
       break;
-    case 1:
-      digitalWrite(en1, 1);
-      digitalWrite(en2, 0);
-      digitalWrite(en3, 1);
-      writeLed(color_en2);
+    case SLOT_FULL:
+      updateColorIndex(colorEn, RED_COLOR);
       break;
-    case 2:
-      digitalWrite(en1, 1);
-      digitalWrite(en2, 1);
-      digitalWrite(en3, 0);
-      writeLed(color_en3);
+    case SLOT_REVERSE:
+      updateColorIndex(colorEn, YELLOW_COLOR);
       break;
   }
- 
 }
-
+unsigned long int test;
 void setup() {
   // put your setup code here, to run once:
+  currentMillis = millis();
+  test = millis();
+  init_slot();
+
   Serial.begin(9600);
   pinMode(red, OUTPUT);
   pinMode(green, OUTPUT);
   pinMode(blue, OUTPUT);
   pinMode(en1, OUTPUT);
   pinMode(en2, OUTPUT);
-  pinMode(en3, OUTPUT);
 
   initLED();
 }
 
+String data = "";
+int test33 = 0;
 void loop() {
-  // put your main code here, to run repeatedly:
-  ledRGB(i, color_En1, color_En2, color_En3);
+  currentMillis = millis();
+
+  ledRGB(index, color_En1, color_En2);
   // update color of ledRGB controlled by en1
-  updateColorIndex(color_En1, GREEN_COLOR);
-  if (i >= 2) i = 0;
-  else i++;
-  delay(10);
+  if (index >= N0_NODE_CAR - 1) index = 0;
+  else index++;
+
+  //get_car_distance();
+  
+
+
+
+  
+  while(Serial.available()) {
+        data = Serial.readStringUntil('\n');
+        Serial.println(data);
+        slot_car_status[0].distance = data.toFloat();
+        Serial.println(slot_car_status[0].distance);
+  }
+  
+  
+ // slot_car_status[1].distance = 4;
+check_slot_status();
+  // for (int i = 0; i < 2; i++) {
+  //       Serial.print("car "); Serial.print(i);Serial.print(" ");Serial.println(slot_car_status[i].distance);
+  // }
+  updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
+  updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
+  
+  delay(20);
 }
