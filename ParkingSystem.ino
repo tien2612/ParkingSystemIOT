@@ -4,15 +4,17 @@
 #include "myColor.h"
 #include "user_RFID.h"
 #include "user_Slot.h"
-//#include "user_Slot.h"
+#include "eeprom.h"
+#include "NRF24.h"
 
 /* Index of led RGB */
 int index = 0;
-slot_status slot_car_status[N0_NODE_CAR];
 
+user_data_ID user_ID_Slot[N0_NODE_CAR * 2] = { {0, 0, 0, 0} };
 
-/* Declare car slot infor */
+user_data_ID user_ID[N0_USER_ID] = { {0} };
 
+MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance.
 /* HC-SR04 pin-out*/
 /* initialisation class HCSR04 (trig pin , echo pin, number of sensor) */
 HCSR04 hc(2, new int[2]{4, 6}, 2);
@@ -45,7 +47,6 @@ void check_slot_status() {
         slot_car_status[i].doneChecking = true;
         slot_car_status[i].flag_checking_slot = false;
         slot_car_status[i].status = SLOT_FULL;
-        Serial.println(slot_car_status[0].status);
       } else {
         slot_car_status[i].status = SLOT_EMPTY;
       }
@@ -74,12 +75,61 @@ void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
       break;
   }
 }
-unsigned long int test;
+
+void read_new_user_uid() {
+  if (current_user >= N0_USER_ID) return;
+  
+  for (byte i = 0; i < mfrc522.uid.size; i++) { 
+      Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");   
+      user_ID[current_user++].ID[i] = mfrc522.uid.uidByte[i];
+  }
+
+  /* Push new data to firestore */
+  send_new_uid_to_gateWay(user_ID[current_user - 1].ID);
+  /* Store data in EEPROM */
+  eepromWrite(address_user_ID, user_ID, sizeof(user_ID));
+
+  for (int i = 0; i < N0_USER_ID; i++) {
+    for (int j = 0; j < 4; j++) {
+      Serial.println("UID "); Serial.println(i + " "); Serial.print(user_ID[i].ID[j]);  
+    }
+  }
+}
+
+void restoreDataFromEEPROM() {
+    eepromRead(address_user_ID, user_ID, sizeof(user_ID));
+    eepromRead(address_slot_ID, user_ID_Slot, sizeof(user_ID_Slot));
+}
+
+void receive_reverse_booking_slot(int slot, String UID) {
+  if (slot >= N0_NODE_CAR) return;
+
+  /* Update yellow color slot (reverse) and start waiting customer within 15 minutes */
+  updateColorIndex(slot, YELLOW_COLOR);
+  startWaitingCustomer = millis();
+
+  /* Store UID to EEPROM */
+  int index = 0;
+  String data = "";
+  for (int i = 0; i < sizeof(UID)/sizeof(UID[0]); i++) {
+    if (i == ' ') {
+      user_ID[slot].ID[index++] = data.toInt();  
+      data = "";
+    } else data += UID[i];
+  }
+  
+  eepromWrite(address_slot_ID, user_ID_Slot, sizeof(user_ID_Slot));
+
+  confirm_data_receive("Rcv S" + String(slot));
+}
+
 void setup() {
   // put your setup code here, to run once:
   currentMillis = millis();
-  test = millis();
+  startWaitingCustomer = millis();
+
   init_slot();
+  mfrc522.PCD_Init(); // Initiate MFRC522
 
   Serial.begin(9600);
   pinMode(red, OUTPUT);
@@ -88,40 +138,68 @@ void setup() {
   pinMode(en1, OUTPUT);
   pinMode(en2, OUTPUT);
 
+  pinMode(servo_slot1, OUTPUT);
+  pinMode(servo_slot2, OUTPUT);
+
+  restoreDataFromEEPROM();
+  
+  servo_s1.attach(servo_slot1);
+  servo_s1.write(100);
+
+  servo_s2.attach(servo_slot2);
+  servo_s2.write(100);
   initLED();
 }
 
-String data = "";
-int test33 = 0;
+int *data_slot_rcv = {0};
+
 void loop() {
   currentMillis = millis();
+
+  // if (check_booking_receive() != NULL) {
+  //   int *data_slot_rcv = {0};
+  //   data_slot_rcv = check_booking_receive();
+  //   receive_reverse_booking_slot(data_slot_rcv[0], String(data_slot_rcv[1]) );
+  //   close_slot(data_slot_rcv[0]);
+  // }
+
+  // if (startWaitingCustomer >= TIME_WAITING && !user_ID_Slot[data_slot_rcv[0]].is_arrived) {
+  //   updateColorIndex(data_slot_rcv[0], GREEN_COLOR);
+  //   open_slot(data_slot_rcv[0]);
+  // }
+  // // Look for new cards
+  // if ( ! mfrc522.PICC_IsNewCardPresent())
+  //   return;
+
+  // // Verify if the NUID has been readed
+  // if ( ! mfrc522.PICC_ReadCardSerial())
+  //   return;
 
   ledRGB(index, color_En1, color_En2);
   // update color of ledRGB controlled by en1
   if (index >= N0_NODE_CAR - 1) index = 0;
   else index++;
 
-  //get_car_distance();
+  get_car_distance();
   
-
-
-
-  
-  while(Serial.available()) {
-        data = Serial.readStringUntil('\n');
-        Serial.println(data);
-        slot_car_status[0].distance = data.toFloat();
-        Serial.println(slot_car_status[0].distance);
-  }
-  
-  
- // slot_car_status[1].distance = 4;
-check_slot_status();
-  // for (int i = 0; i < 2; i++) {
-  //       Serial.print("car "); Serial.print(i);Serial.print(" ");Serial.println(slot_car_status[i].distance);
+  // while(Serial.available()) {
+  //       data = Serial.readStringUntil('\n');
+  //       Serial.println(data);
+  //       slot_car_status[0].distance = data.toFloat();
+  //       Serial.println(slot_car_status[0].distance);
   // }
-  updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
-  updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
   
+  // if (slot_car_status[0].distance <= 5) {
+  //   servo_s2.write(0);
+  // } else {
+  //   servo_s2.write(100);
+  // }
+ // slot_car_status[1].distance = 4;
+  // check_slot_status();
+
+  // updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
+  // updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
+
   delay(20);
 }
+
