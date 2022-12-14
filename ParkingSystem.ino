@@ -1,3 +1,4 @@
+#include <EEPROM.h>
 #include <Arduino.h>
 #include <HCSR04.h>
 
@@ -13,6 +14,8 @@ int index = 0;
 user_data_ID user_ID_Slot[N0_NODE_CAR * 2] = { {0, 0, 0, 0} };
 
 user_data_ID user_ID[N0_USER_ID] = { {0} };
+
+static int UID_Read[4];
 
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance.
 /* HC-SR04 pin-out*/
@@ -58,8 +61,9 @@ void check_slot_status() {
 void get_car_distance() {
   for (int i = 0; i < N0_NODE_CAR; i++)      {
     slot_car_status[i].distance = hc.dist(i);
+    Serial.println(slot_car_status[i].distance);
   }
-  delay(60);
+  delay(300);
 }
 
 void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
@@ -87,7 +91,7 @@ void read_new_user_uid() {
   /* Push new data to firestore */
   send_new_uid_to_gateWay(user_ID[current_user - 1].ID);
   /* Store data in EEPROM */
-  eepromWrite(address_user_ID, user_ID, sizeof(user_ID));
+  //eepromWrite(address_user_ID, user_ID, sizeof(user_ID));
 
   for (int i = 0; i < N0_USER_ID; i++) {
     for (int j = 0; j < 4; j++) {
@@ -97,8 +101,9 @@ void read_new_user_uid() {
 }
 
 void restoreDataFromEEPROM() {
-    eepromRead(address_user_ID, user_ID, sizeof(user_ID));
-    eepromRead(address_slot_ID, user_ID_Slot, sizeof(user_ID_Slot));
+    // eepromRead(address_user_ID, user_ID, sizeof(user_ID));
+    // eepromRead(address_slot_ID, user_ID_Slot, sizeof(user_ID_Slot));
+    current_user = EEPROM.read(address_number_of_users);
 }
 
 void receive_reverse_booking_slot(int slot, String UID) {
@@ -106,48 +111,53 @@ void receive_reverse_booking_slot(int slot, String UID) {
 
   /* Update yellow color slot (reverse) and start waiting customer within 15 minutes */
   updateColorIndex(slot, YELLOW_COLOR);
-  startWaitingCustomer = millis();
-
+  
   /* Store UID to EEPROM */
   int index = 0;
   String data = "";
   for (int i = 0; i < sizeof(UID)/sizeof(UID[0]); i++) {
     if (i == ' ') {
-      user_ID[slot].ID[index++] = data.toInt();  
+      user_ID_Slot[slot].ID[index++] = data.toInt();  
       data = "";
     } else data += UID[i];
   }
   
-  eepromWrite(address_slot_ID, user_ID_Slot, sizeof(user_ID_Slot));
+  //eepromWrite(address_slot_ID, user_ID_Slot, sizeof(user_ID_Slot));
 
   confirm_data_receive("Rcv S" + String(slot));
+  startWaitingCustomer = millis();
 }
 
 void setup() {
-  // put your setup code here, to run once:
+  // // put your setup code here, to run once:
   currentMillis = millis();
   startWaitingCustomer = millis();
 
-  init_slot();
-  mfrc522.PCD_Init(); // Initiate MFRC522
+  Serial.begin(9600);   
 
-  Serial.begin(9600);
+  init_slot();
+  SPI.begin();    
+  mfrc522.PCD_Init();
+
   pinMode(red, OUTPUT);
   pinMode(green, OUTPUT);
   pinMode(blue, OUTPUT);
   pinMode(en1, OUTPUT);
   pinMode(en2, OUTPUT);
 
-  pinMode(servo_slot1, OUTPUT);
-  pinMode(servo_slot2, OUTPUT);
+  // pinMode(servo_slot1, OUTPUT);
+  // pinMode(servo_slot2, OUTPUT);
 
-  restoreDataFromEEPROM();
+  // restoreDataFromEEPROM();
   
-  servo_s1.attach(servo_slot1);
-  servo_s1.write(100);
+  // servo_s1.attach(servo_slot1);
+  // servo_s1.write(100);
 
-  servo_s2.attach(servo_slot2);
-  servo_s2.write(100);
+  // servo_s2.attach(servo_slot2);
+  // servo_s2.write(100);
+  for(int i=0; i< EEPROM.length(); i++){
+    EEPROM.write(i,0);
+  }
   initLED();
 }
 
@@ -156,50 +166,56 @@ int *data_slot_rcv = {0};
 void loop() {
   currentMillis = millis();
 
-  // if (check_booking_receive() != NULL) {
-  //   int *data_slot_rcv = {0};
-  //   data_slot_rcv = check_booking_receive();
-  //   receive_reverse_booking_slot(data_slot_rcv[0], String(data_slot_rcv[1]) );
-  //   close_slot(data_slot_rcv[0]);
-  // }
+  if (check_booking_receive() != NULL) {
+    int *data_slot_rcv = {0};
+    data_slot_rcv = check_booking_receive();
+    receive_reverse_booking_slot( data_slot_rcv[0], String(data_slot_rcv[1]) );
+    close_slot(data_slot_rcv[0]);
+  }
 
-  // if (startWaitingCustomer >= TIME_WAITING && !user_ID_Slot[data_slot_rcv[0]].is_arrived) {
-  //   updateColorIndex(data_slot_rcv[0], GREEN_COLOR);
-  //   open_slot(data_slot_rcv[0]);
-  // }
-  // // Look for new cards
-  // if ( ! mfrc522.PICC_IsNewCardPresent())
-  //   return;
-
-  // // Verify if the NUID has been readed
-  // if ( ! mfrc522.PICC_ReadCardSerial())
-  //   return;
+  if (startWaitingCustomer >= TIME_WAITING && !user_ID_Slot[data_slot_rcv[0]].is_arrived) {
+    updateColorIndex(data_slot_rcv[0], GREEN_COLOR);
+    open_slot(data_slot_rcv[0]);
+  }
 
   ledRGB(index, color_En1, color_En2);
   // update color of ledRGB controlled by en1
   if (index >= N0_NODE_CAR - 1) index = 0;
   else index++;
 
-  get_car_distance();
+  //get_car_distance();
   
-  // while(Serial.available()) {
-  //       data = Serial.readStringUntil('\n');
-  //       Serial.println(data);
-  //       slot_car_status[0].distance = data.toFloat();
-  //       Serial.println(slot_car_status[0].distance);
-  // }
-  
-  // if (slot_car_status[0].distance <= 5) {
-  //   servo_s2.write(0);
-  // } else {
-  //   servo_s2.write(100);
-  // }
- // slot_car_status[1].distance = 4;
-  // check_slot_status();
-
-  // updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
-  // updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
+  updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
+  updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
 
   delay(20);
-}
 
+  if ( ! mfrc522.PICC_IsNewCardPresent()) 
+  { 
+    return; 
+  }
+  
+  if ( ! mfrc522.PICC_ReadCardSerial()) 
+  {  
+    return;  
+  }
+  
+  Serial.print("UID của thẻ: ");   
+  
+  for (byte i = 0; i < mfrc522.uid.size; i++) 
+  { 
+    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");   
+    UID_Read[i] = mfrc522.uid.uidByte[i];
+    Serial.print(UID_Read[i]);
+  }
+
+  Serial.println("   ");
+  
+  /* If new UID is read, store it into EEPROM */
+  if (check_if_new_id(UID_Read)) {
+    store_new_UID_into_EEPROM(UID_Read);
+  }
+
+  mfrc522.PICC_HaltA();  
+  mfrc522.PCD_StopCrypto1();
+}

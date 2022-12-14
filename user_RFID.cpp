@@ -1,4 +1,4 @@
-// #include "user_RFID.h"
+#include "user_RFID.h"
 #include "myColor.h"
 
 int current_user = 0;
@@ -21,5 +21,6 @@ void send_new_uid_to_gateWay(int *uid) {
       data_send += " ";
   }
 }
+
 
 

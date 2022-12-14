@@ -5,9 +5,10 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include "user_Slot.h"
+#include "eeprom.h"
 
 // 4 car slot
-#define N0_USER_ID      10
+#define N0_USER_ID      250 
 
 #define RST_PIN         9
 #define SS_PIN          10
@@ -29,4 +30,5 @@ extern user_data_ID user_ID[N0_USER_ID];
 int check_id(int *arr, int *data);
 
 void send_new_uid_to_gateWay(int *uid);
+
 #endif
