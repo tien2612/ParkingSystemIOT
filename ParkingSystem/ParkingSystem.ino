@@ -10,14 +10,24 @@
 
 /* Index of led RGB */
 int index = 0;
+//MFRC522 mfrc522(SS_PIN, RST_PIN); // instatiate a MFRC522 reader object.
+MFRC522 mfrc522[NR_OF_READERS];   // Create MFRC522 instance.
+MFRC522::MIFARE_Key key; //create a MIFARE_Key struct named 'key', which will hold the card information
+
+byte ssPins[] = {SS_1_PIN, SS_2_PIN};
+
+byte nuidPICC[4];
+
+uint8_t reader, i;
 
 user_data_ID user_ID_Slot[N0_NODE_CAR * 2] = { {0, 0, 0, 0} };
 
 user_data_ID user_ID[N0_USER_ID] = { {0} };
 
 static int UID_Read[4];
+int ID1[4] = {160, 59, 216, 32}; //Thẻ mở đèn
+int ID2[4] = {144, 239, 110, 32} ; //Thẻ mở đèn
 
-MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance.
 /* HC-SR04 pin-out*/
 /* initialisation class HCSR04 (trig pin , echo pin, number of sensor) */
 HCSR04 hc(2, new int[2]{4, 6}, 2);
@@ -80,26 +90,6 @@ void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
   }
 }
 
-void read_new_user_uid() {
-  if (current_user >= N0_USER_ID) return;
-  
-  for (byte i = 0; i < mfrc522.uid.size; i++) { 
-      Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");   
-      user_ID[current_user++].ID[i] = mfrc522.uid.uidByte[i];
-  }
-
-  /* Push new data to firestore */
-  send_new_uid_to_gateWay(user_ID[current_user - 1].ID);
-  /* Store data in EEPROM */
-  //eepromWrite(address_user_ID, user_ID, sizeof(user_ID));
-
-  for (int i = 0; i < N0_USER_ID; i++) {
-    for (int j = 0; j < 4; j++) {
-      Serial.println("UID "); Serial.println(i + " "); Serial.print(user_ID[i].ID[j]);  
-    }
-  }
-}
-
 void restoreDataFromEEPROM() {
     // eepromRead(address_user_ID, user_ID, sizeof(user_ID));
     // eepromRead(address_slot_ID, user_ID_Slot, sizeof(user_ID_Slot));
@@ -129,7 +119,7 @@ void receive_reverse_booking_slot(int slot, String UID) {
 }
 
 void setup() {
-  // // put your setup code here, to run once:
+  // put your setup code here, to run once:
   currentMillis = millis();
   startWaitingCustomer = millis();
 
@@ -137,7 +127,6 @@ void setup() {
 
   init_slot();
   SPI.begin();    
-  mfrc522.PCD_Init();
 
   pinMode(red, OUTPUT);
   pinMode(green, OUTPUT);
@@ -155,9 +144,25 @@ void setup() {
 
   // servo_s2.attach(servo_slot2);
   // servo_s2.write(100);
-  for(int i=0; i< EEPROM.length(); i++){
-    EEPROM.write(i,0);
+  // for(int i=0; i< EEPROM.length(); i++){
+  //   EEPROM.write(i,0);
+  // }
+  pinMode(4, OUTPUT);//led
+
+  Serial.begin(9600); // Initialize serial communications with the PC
+  SPI.begin(); // Init SPI bus
+  for (reader = 0; reader < NR_OF_READERS; reader++) {
+    mfrc522[reader].PCD_Init(ssPins[reader], RST_PIN); // Init each MFRC522 card
+    Serial.print(F("Reader "));
+    Serial.print(reader);
+    Serial.print(F(": "));
+    mfrc522[reader].PCD_DumpVersionToSerial();
   }
+  Serial.println("Scan a MIFARE Classic card");
+  for (byte i = 0; i < 6; i++) {
+    key.keyByte[i] = 0xFF; //keyByte is defined in the "MIFARE_Key" 'struct' definition in the .h file of the library
+  }
+  
   initLED();
 }
 
@@ -165,7 +170,7 @@ int *data_slot_rcv = {0};
 
 void loop() {
   currentMillis = millis();
-
+  /* Check if any slot is reserved */
   if (check_booking_receive() != NULL) {
     int *data_slot_rcv = {0};
     data_slot_rcv = check_booking_receive();
@@ -188,34 +193,40 @@ void loop() {
   updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
   updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
 
-  delay(20);
+  for (reader = 0; reader < NR_OF_READERS; reader++){
+    if (mfrc522[reader].PICC_IsNewCardPresent() && mfrc522[reader].PICC_ReadCardSerial()) {
+    Serial.println("found card");
+    //Store Card UID
+        Serial.print("UID của thẻ: ");   
+        for (byte i = 0; i < 4; i++) {
+          Serial.print(mfrc522[reader].uid.uidByte[i] < 0x10 ? " 0" : " ");   
+          nuidPICC[i] = mfrc522[reader].uid.uidByte[i];
+          Serial.print(nuidPICC[i]);
+        }
+        
+        
 
-  if ( ! mfrc522.PICC_IsNewCardPresent()) 
-  { 
-    return; 
-  }
-  
-  if ( ! mfrc522.PICC_ReadCardSerial()) 
-  {  
-    return;  
-  }
-  
-  Serial.print("UID của thẻ: ");   
-  
-  for (byte i = 0; i < mfrc522.uid.size; i++) 
-  { 
-    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");   
-    UID_Read[i] = mfrc522.uid.uidByte[i];
-    Serial.print(UID_Read[i]);
-  }
+        if (nuidPICC[i] == ID1[i])
+        {
+          digitalWrite(4, HIGH);
+          Serial.println("Thẻ mở đèn - ĐÈN ON");
+        }
+        
+        else if (nuidPICC[i] == ID2[i])
+        {
+          digitalWrite(4, LOW);
+          Serial.println("Thẻ tắt đèn - ĐÈN OFF");
+        }
 
-  Serial.println("   ");
-  
-  /* If new UID is read, store it into EEPROM */
-  if (check_if_new_id(UID_Read)) {
-    store_new_UID_into_EEPROM(UID_Read);
-  }
+        else
+        {
+          Serial.println("Sai thẻ");
+        }
+        Serial.println("   ");             
+    }
 
-  mfrc522.PICC_HaltA();  
-  mfrc522.PCD_StopCrypto1();
+      mfrc522[reader].PICC_HaltA();  
+      mfrc522[reader].PCD_StopCrypto1();
+      delay(50);
+  }
 }
