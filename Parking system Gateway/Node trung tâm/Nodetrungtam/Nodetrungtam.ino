@@ -16,6 +16,7 @@
 #include <MFRC522.h>
 
 #include "user_Slot.h"
+#include "user_RFID.h"
 
 #define RST_PIN         9
 #define SS_PIN          10
@@ -32,8 +33,32 @@ LiquidCrystal_I2C lcd(0x3F,16,2); //Khai báo địa chỉ I2C (0x27 or 0x3F) v�
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 int UID[4], i;
 
-String send_data;
-String receive_data;
+String send_data_nrf;
+String receive_data_nrf;
+
+String send_data_esp;
+String receive_data_esp;
+
+
+void comparser_command_data(string data){
+  String command = "";
+  for (int i = 1; i <data.length()-1 ;i++){
+    if ( data[i] == ":") break;
+    command += data[i];
+  }
+  Serial.println(command);
+  switch (command){
+    case "UID":
+      
+      break;
+    case "SLOT":
+    break;
+    case "RESERVED":
+    break;
+    default:
+    break;
+    }
+}
 
 void setup() {
   Serial.begin(9600);
@@ -72,42 +97,49 @@ void setup() {
   SPI.begin();    
   mfrc522.PCD_Init();
   
-  
 }
 
 void loop() {
 
-  // radio.stopListening();
-  // /////
+  radio.stopListening();
+  /////
 
-  // /////
-  // radio.write(&send_data , sizeof(send_data));
-  // delay(10);
+  /////
+  // Format : !RESERVED:slot:uid#
+  send_data_nrf = receive_data_esp;
+  radio.write(&send_data_nrf , sizeof(send_data_nrf));
+  delay(10);
 
-  // radio.startListening();
-  // while (!radio.available());
-  // radio.read(&receive_data , sizeof(receive_data));
-  // //////
+  radio.startListening();
+  while (!radio.available());
+  // Format : !UID:String# or !SLOT:slot:status#  
+  radio.read(&receive_data_nrf , sizeof(receive_data_nrf));
+  //////
+  //////
+  delay(10);
 
-  // //////
-  // delay(10);
 
-  send_data = "01,01";
-  Arduino_softSerial.println(send_data);
-  Serial.println("Gui du lieu toi ESP8266");  
-  Serial.println(send_data);
+  send_data_esp = receive_data_nrf;
+  Arduino_softSerial.println(send_data_esp);
+  Serial.println("Gui du lieu toi ESP8266");
+   // Format : !UID:String# or !SLOT:slot:status#  
+  Serial.println(send_data_esp);
   send_data = "";
+  
   
   
   /* Received data from ESP8266 */
   while(Arduino_softSerial.available()) {
     receive_data = Arduino_softSerial.readStringUntil('\n');
     receive_data.remove(receive_data.length() - 1, 1);
-    Serial.println("Du lieu nhan tu ESP8266"); 
-    Serial.println(receive_data);
-    receive_data = "";    
+    Serial.println("Du lieu nhan tu ESP8266");
+    // Format : !RESERVED:slot:uid#
+    Serial.println(receive_data_esp);
+    receive_data_esp = "";    
   }
   delay(1000);
+
+  
 
   /*
   lcd.setCursor(0, 0); //Chọn vị trí đặt con trỏ. 0 đầu là chọn cột (từ 0 - 16), 0 kế là chọn hàng (có 2 hàng 0 và 1)
