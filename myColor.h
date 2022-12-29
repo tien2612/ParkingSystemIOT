@@ -1,6 +1,7 @@
 #ifndef myColor_h
 #define myColor_h
 #include "Arduino.h"
+#include "eeprom.h"
 
 #define RED_COLOR     0
 #define YELLOW_COLOR  1

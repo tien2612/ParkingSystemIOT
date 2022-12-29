@@ -1,6 +1,7 @@
 #include "eeprom.h"
 
 int address_number_of_users = 0;
+int address_color_of_slot[2] = {1000, 1008};
 
 /* Read data from EEPROM */
 void eepromRead(uint16_t addr, void* output, uint16_t length) {

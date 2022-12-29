@@ -19,7 +19,6 @@ extern const byte address[6][6];
 extern int booking_slot;
 extern int *UID;
 /* Start calculate time-out */
-extern unsigned long int startWaitingCustomer;
 
 int* check_booking_receive();
 
