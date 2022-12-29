@@ -1,3 +1,4 @@
+#include "WString.h"
 #ifndef NRF24_H
 #define NRF24_H
 
@@ -24,4 +25,5 @@ int* check_booking_receive();
 
 void confirm_data_receive(String msg);
 
+int *parse_command(String cmd);
 #endif

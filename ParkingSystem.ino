@@ -44,37 +44,45 @@ void init_slot() {
   }
 }
 
-void check_slot_status() {
-  for (int i = 0; i < N0_NODE_CAR; i++) {
-    if (slot_car_status[i].distance <= 5 && slot_car_status[i].flag_checking_slot == false) {
-      slot_car_status[i].startMillisCar = currentMillis;
-      slot_car_status[i].flag_checking_slot = true;
-      slot_car_status[i].doneChecking = false;
-    } else if (slot_car_status[i].distance > 5) {
-      slot_car_status[i].status = SLOT_EMPTY;
-      slot_car_status[i].flag_checking_slot = false;
-    }
-    
-    if (slot_car_status[i].doneChecking == false) {
-
-      if (slot_car_status[i].flag_checking_slot && (currentMillis - slot_car_status[i].startMillisCar >= TIME_VALID)){  
-        slot_car_status[i].doneChecking = true;
-        slot_car_status[i].flag_checking_slot = false;
-        slot_car_status[i].status = SLOT_FULL;
-      } else {
-        slot_car_status[i].status = SLOT_EMPTY;
-      }
-      
-    }
-  }
-}
-
 void get_car_distance() {
   for (int i = 0; i < N0_NODE_CAR; i++)      {
     slot_car_status[i].distance = hc.dist(i);
     Serial.print("Car: "); Serial.print(i); Serial.print(" ");Serial.println(slot_car_status[i].distance);
   }
   delay(100);
+}
+
+void check_slot_status() {
+  /* Get distance of car */
+  get_car_distance();
+
+  for (int i = 0; i < N0_NODE_CAR; i++) {
+    // Serial.println(slot_car_status[0].status);
+    
+    // if (slot_car_status[0].status == SLOT_FULL) digitalWrite(7, HIGH);
+    // else if (slot_car_status[0].status == SLOT_EMPTY) digitalWrite(7, 0);
+    
+    if (slot_car_status[i].distance <= 10 && slot_car_status[i].flag_checking_slot == false) {
+      slot_car_status[i].startMillisCar = currentMillis;
+      slot_car_status[i].flag_checking_slot = true;
+      slot_car_status[i].doneChecking = false;
+    } else if (slot_car_status[i].distance > 10) {
+      slot_car_status[i].status = SLOT_EMPTY;
+      slot_car_status[i].flag_checking_slot = false;
+    }
+    
+    if (slot_car_status[i].doneChecking == false) {
+
+      if (slot_car_status[i].flag_checking_slot && (currentMillis - slot_car_status[i].startMillisCar >= TIME_VALID) ){  
+        slot_car_status[i].doneChecking = true;
+        slot_car_status[i].flag_checking_slot = false;
+        slot_car_status[i].status = SLOT_FULL;
+      }
+      // else {
+      //   slot_car_status[i].status = SLOT_EMPTY;
+      // }
+    }
+  }
 }
 
 void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
@@ -85,7 +93,7 @@ void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
     case SLOT_FULL:
       updateColorIndex(colorEn, RED_COLOR);
       break;
-    case SLOT_REVERSE:
+    case SLOT_RESERVED:
       updateColorIndex(colorEn, YELLOW_COLOR);
       break;
   }
@@ -151,7 +159,7 @@ void setup() {
   pinMode(blue, OUTPUT);
   pinMode(en1, OUTPUT);
   pinMode(en2, OUTPUT);
-
+  pinMode(7, OUTPUT);
   // pinMode(servo_slot1, OUTPUT);
   // pinMode(servo_slot2, OUTPUT);
 
@@ -227,8 +235,9 @@ void loop() {
     check_customer_arrived(i);
   }
 
-  get_car_distance();
   
+  check_slot_status();
+
   updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
   updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
 
@@ -244,11 +253,11 @@ void loop() {
         
         if (nuidPICC[i] == ID1[i]) {
           //updateColorIndex(color_En1, HIGH);
-          digitalWrite(2, HIGH);
+          analogWrite(red, 255);
         }
         else if (nuidPICC[i] == ID2[i]) {
           //updateColorIndex(color_En1, LOW);
-          digitalWrite(2, LOW);
+          analogWrite(red, 0);
         }
         else Serial.println("Wrong card");
         // if (slot_car_status[0].is_slot_reserved == true) {

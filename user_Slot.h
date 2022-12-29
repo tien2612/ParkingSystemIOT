@@ -8,10 +8,10 @@
 
 #define SLOT_EMPTY     3
 #define SLOT_FULL      4
-#define SLOT_REVERSE   5
+#define SLOT_RESERVED  5
 
 #define UNDEFINED     999
-#define TIME_VALID    1000
+#define TIME_VALID    3000
 #define TIME_WAITING  30000
 
 const int servo_slot1 = 3;
