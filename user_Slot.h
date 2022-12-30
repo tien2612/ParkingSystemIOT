@@ -8,14 +8,14 @@
 
 #define SLOT_EMPTY     3
 #define SLOT_FULL      4
-#define SLOT_REVERSE   5
+#define SLOT_RESERVED  5
 
 #define UNDEFINED     999
-#define TIME_VALID    1000
+#define TIME_VALID    3000
 #define TIME_WAITING  30000
 
 const int servo_slot1 = 3;
-const int servo_slot2 = 5;
+const int servo_slot2 = 7;
 
 /* Servo */
 extern Servo servo_s1;
@@ -27,6 +27,8 @@ struct slot_status {
   bool flag_checking_slot;
   bool doneChecking;
   unsigned long int startMillisCar;
+  byte UID_reserved[4];
+  bool is_slot_reserved;
 };
 
 /* Declare car slot infor */

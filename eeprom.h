@@ -7,6 +7,7 @@
 #include <EEPROM.h>
 
 extern int address_number_of_users;
+extern int address_color_of_slot[2];
 
 void eepromRead(uint16_t addr, int* output, uint16_t length);
 

@@ -1,3 +1,4 @@
+#include "WString.h"
 #ifndef NRF24_H
 #define NRF24_H
 
@@ -19,10 +20,10 @@ extern const byte address[6][6];
 extern int booking_slot;
 extern int *UID;
 /* Start calculate time-out */
-extern unsigned long int startWaitingCustomer;
 
 int* check_booking_receive();
 
 void confirm_data_receive(String msg);
 
+int *parse_command(String cmd);
 #endif

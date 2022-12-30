@@ -25,6 +25,7 @@ extern int current_user;
 struct user_data_ID {
   int ID[4];
   int is_arrived;
+  bool startWaitingCustomer;
 };
 
 /* 4 car in 2 node
