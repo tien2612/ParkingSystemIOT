@@ -21,17 +21,17 @@ void updateColorIndex(int &en, int color) {
 /* Initiate the corresponding three colors */
 void initLED() {
   for (int i = 0; i < 3; i++) {
-    led_color[RED_COLOR].color[0] = 1;
-    led_color[RED_COLOR].color[1] = 0;
-    led_color[RED_COLOR].color[2] = 0;
+    led_color[RED_COLOR].color[0] = 0;
+    led_color[RED_COLOR].color[1] = 1;
+    led_color[RED_COLOR].color[2] = 1;
 
-    led_color[GREEN_COLOR].color[0] = 0;
-    led_color[GREEN_COLOR].color[1] = 1;
-    led_color[GREEN_COLOR].color[2] = 0;
+    led_color[GREEN_COLOR].color[0] = 1;
+    led_color[GREEN_COLOR].color[1] = 0;
+    led_color[GREEN_COLOR].color[2] = 1;
 
-    led_color[YELLOW_COLOR].color[0] = 1;
-    led_color[YELLOW_COLOR].color[1] = 1;
-    led_color[YELLOW_COLOR].color[2] = 0;
+    led_color[YELLOW_COLOR].color[0] = 0;
+    led_color[YELLOW_COLOR].color[1] = 0;
+    led_color[YELLOW_COLOR].color[2] = 1;
   }
 }
 /* Make color for LED */
