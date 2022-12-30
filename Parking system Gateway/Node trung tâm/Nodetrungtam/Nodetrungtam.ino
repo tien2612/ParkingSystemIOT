@@ -39,6 +39,7 @@ String receive_data_nrf;
 String send_data_esp;
 String receive_data_esp;
 
+int count = 0;
 
 void comparser_command_data(String cmd){
   
@@ -106,27 +107,26 @@ void setup() {
   // digitalWrite(RST_PIN, HIGH);
   // pinMode(SS_PIN, OUTPUT);
   // digitalWrite(SS_PIN, LOW);
+    
+  // if (!radio.begin()){
+  //   Serial.println("Module isn't connected ...!!");
+  //   while (1){}
+  // }
+  // radio.openWritingPipe(Address[0]); // Only write on a channel 
+  //   // Open a channel to write on address"PKIOT0" 
+  // radio.openReadingPipe(1,Address[1]); // Open a channel to read on address"PKIOT1" (Node 1)
+  // radio.openReadingPipe(2,Address[2]); // Open a channel to read on address"PKIOT2" (Node 2)
 
 
-  if (!radio.begin()){
-    Serial.println("Module isn't connected ...!!");
-    while (1){}
-  }
-  radio.openWritingPipe(Address[0]); // Only write on a channel 
-    // Open a channel to write on address"PKIOT0" 
-  radio.openReadingPipe(1,Address[1]); // Open a channel to read on address"PKIOT1" (Node 1)
-  radio.openReadingPipe(2,Address[2]); // Open a channel to read on address"PKIOT2" (Node 2)
+  // radio.setPALevel(RF24_PA_MIN); //Cài bộ khuyết địa công suất ở mức MIN
+  // radio.setChannel(80);
+  // radio.setDataRate(RF24_250KBPS);    
 
-
-  radio.setPALevel(RF24_PA_MIN); //Cài bộ khuyết địa công suất ở mức MIN
-  radio.setChannel(80);
-  radio.setDataRate(RF24_250KBPS);    
-
-  if (!radio.available())
-  {
-    Serial.println("Chưa kết nối được với Node con...!!");
-    Serial.println("CHỜ KẾT NỐI.......");
-  }
+  // if (!radio.available())
+  // {
+  //   Serial.println("Chưa kết nối được với Node con...!!");
+  //   Serial.println("CHỜ KẾT NỐI.......");
+  // }
 
   /////////////////
   Arduino_softSerial.begin(9600);
@@ -135,8 +135,9 @@ void setup() {
   servo.write(0);
 
   /* setup for LCD*/
-  lcd.begin(); //Khởi tạo màn hình LCD
-  lcd.backlight(); //Bật đèn màn hình lCD  
+  // lcd.begin(); //Khởi tạo màn hình LCD
+  // lcd.backlight(); //Bật đèn màn hình lCD  
+  setupLCD();
  
 
 }
@@ -146,7 +147,16 @@ void loop() {
   // comparser_command_data("!UID:100 15 20 30#");
   // comparser_command_data("!SLOT:2:1#"); 
   // comparser_command_data("!RESERVED:2:10 78 26 99#");  
-    if ( ! mfrc522.PICC_IsNewCardPresent()) 
+
+  for (int i = 0; i < 4 ; i++){
+      status_slot[i] = count % 3;
+      count++;
+      displayLCD();
+      delay(1000);
+  }
+  // lcd.blink();
+
+  if ( ! mfrc522.PICC_IsNewCardPresent()) 
   { 
     return; 
   }

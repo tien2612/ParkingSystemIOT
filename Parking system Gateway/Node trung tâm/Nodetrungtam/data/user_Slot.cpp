@@ -1,4 +1,3 @@
-#include "HardwareSerial.h"
 #include "user_Slot.h"
 
 Servo servo;
@@ -18,7 +17,6 @@ void close_barrier(){
 void setupLCD(void){
   lcd.begin(); //Khởi tạo màn hình LCD
   lcd.backlight(); //Bật đèn màn hình lCD    
-  Serial.println("Set up LCD");
 }
 
 void displayLCD(){
@@ -27,32 +25,32 @@ void displayLCD(){
   // lcd.print("1.EMPTY"); 
   // lcd.print("1.RESERV");
   String display = "";
-  for (int i = 1 ; i < 5; i++){
+  for (int i = 0 ; i < 4; i++){
     display += String(i) + "-";
       switch(i){
-        case 1: // slot 1
+        case 0: // slot 1
         lcd.setCursor(0, 0);   
         break;   
-        case 2: // slot 2
-        lcd.setCursor(8, 0);   
+        case 1: // slot 2
+        lcd.setCursor(7, 0);   
         break;  
-        case 3: // slot 3
+        case 2: // slot 3
         lcd.setCursor(0, 1);   
         break;               
         case 4: // slot 4
-        lcd.setCursor(8, 1);   
+        lcd.setCursor(7, 1);   
         break;                      
       }
       
-      switch(status_slot[i-1]){
-        case 0: // red  // "1-FULL  "
-        display += "FULL  ";
+      switch(status_slot[i]){
+        case 0: // red 
+        display += "FULL";
         break;   
-        case 1: // green "2-EMPTY "
-        display += "EMPTY "; 
+        case 1: // green
+        display += "EMPTY"; 
         break;  
-        case 2: // Yellow //3-RESER ""
-        display += "RESER ";  
+        case 2: // Yellow
+        display += "RESERV";  
         break;                                    
       }
       lcd.print(display); 
