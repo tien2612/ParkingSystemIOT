@@ -18,7 +18,7 @@ int* check_booking_receive() {
   return NULL;
 }
 
-void confirm_data_receive(String msg) {
+void confirm_data_receive(int code) {
   // send msg confirm to gateway
 }
 

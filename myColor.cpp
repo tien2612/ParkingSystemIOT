@@ -10,18 +10,18 @@ int en1 = A3;
 int en2 = A4;
 //int en3 = 2;
 
-int color_En1 = 2;
+int color_En1 = GREEN_COLOR;
 int color_En2 = GREEN_COLOR;
 //int color_En3 = YELLOW_COLOR;
 
 /* Update color of ledRGB controlled by en */
 void updateColorIndex(int &en, int color) {
   en = color;
-  int addr_temp = 0;
-  if (en == color_En1) addr_temp = address_color_of_slot[0];
-  else if (en == color_En2) addr_temp = address_color_of_slot[1];
+  // int addr_temp = 0;
+  // if (en == color_En1) addr_temp = address_color_of_slot[0];
+  // else if (en == color_En2) addr_temp = address_color_of_slot[1];
 
-  EEPROM.write(addr_temp, color);
+  // EEPROM.write(addr_temp, color);
 }
 /* Initiate the corresponding three colors */
 void initLED() {
@@ -54,12 +54,14 @@ void ledRGB(int index, int color_en1, int color_en2) {
       digitalWrite(en2, 1);
      // digitalWrite(en3, 1);
       writeLed(color_en1);
+      Serial.print("Write en1: "); Serial.println(color_en1);
       break;
     case 1:
       digitalWrite(en1, 1);
       digitalWrite(en2, 0);
       //digitalWrite(en3, 1);
       writeLed(color_en2);
+      Serial.print("Write en2: "); Serial.println(color_en2);
       break;
     // case 2:
     //   digitalWrite(en1, 1);
@@ -69,6 +71,5 @@ void ledRGB(int index, int color_en1, int color_en2) {
     //   break;
     default:
       break;
-  }
- 
+  } 
 }

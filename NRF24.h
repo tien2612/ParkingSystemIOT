@@ -11,6 +11,11 @@
 #define GOT_BOOK        20
 #define NOTHING         21
 
+struct package {
+  int code = 123;
+  char text[300] = "TEXT TO SENT";
+};
+
 extern RF24 radio; // CE, CSN
 
 /* Address to comm with gateway */
@@ -23,7 +28,7 @@ extern int *UID;
 
 int* check_booking_receive();
 
-void confirm_data_receive(String msg);
+void confirm_data_receive(int code);
 
 int *parse_command(String cmd);
 #endif
