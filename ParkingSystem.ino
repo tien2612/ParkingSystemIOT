@@ -49,7 +49,8 @@ void init_slot() {
 void get_car_distance() {
   for (int i = 0; i < N0_NODE_CAR; i++)      {
     slot_car_status[i].distance = hc.dist(i);
-    Serial.print("Car: "); Serial.print(i); Serial.print(" ");Serial.println(slot_car_status[i].distance);
+    Serial.print(F("Car: ")); Serial.print(i); Serial.print(F(" "));Serial.println(slot_car_status[i].distance);
+    delay(100);
   }
   delay(100);
 }
@@ -251,8 +252,6 @@ void loop() {
     check_customer_arrived(i);
   }
 
-  Serial.println(slot_car_status[0].status);
-  Serial.println(slot_car_status[1].status);
   check_slot_status();
 
   updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
