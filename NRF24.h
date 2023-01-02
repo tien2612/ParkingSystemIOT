@@ -11,12 +11,18 @@
 #define GOT_BOOK        20
 #define NOTHING         21
 
+extern const byte addresses[][6];
+
+
 struct package {
-  int code = 123;
-  char text[300] = "TEXT TO SENT";
+  int id = 123;
+  char text[100] = "TEXT TO SENT";
 };
 
-extern RF24 radio; // CE, CSN
+typedef struct package Package;
+
+extern Package dataReceive;
+extern Package dataTransmit;
 
 /* Address to comm with gateway */
 extern const byte address[6][6];

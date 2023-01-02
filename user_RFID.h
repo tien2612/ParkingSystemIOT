@@ -6,6 +6,8 @@
 #include <MFRC522.h>
 #include "user_Slot.h"
 #include "eeprom.h"
+#include "RFID.h"
+#include <DigitalIO.h> // our software SPI library
 
 // 4 car slot
 #define N0_USER_ID      250 
@@ -21,6 +23,7 @@ struct user_data_ID {
   int ID[4];
   int is_arrived;
   bool startWaitingCustomer;
+  unsigned long int currentTimeOut;
 };
 
 /* 4 car in 2 node

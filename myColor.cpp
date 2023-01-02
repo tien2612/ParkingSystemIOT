@@ -14,6 +14,8 @@ int color_En1 = GREEN_COLOR;
 int color_En2 = GREEN_COLOR;
 //int color_En3 = YELLOW_COLOR;
 
+int index = 0;
+
 /* Update color of ledRGB controlled by en */
 void updateColorIndex(int &en, int color) {
   en = color;
@@ -26,17 +28,17 @@ void updateColorIndex(int &en, int color) {
 /* Initiate the corresponding three colors */
 void initLED() {
   for (int i = 0; i < 3; i++) {
-    led_color[RED_COLOR].color[0] = 1;
-    led_color[RED_COLOR].color[1] = 0;
-    led_color[RED_COLOR].color[2] = 0;
+    led_color[RED_COLOR].color[0] = 0;
+    led_color[RED_COLOR].color[1] = 1;
+    led_color[RED_COLOR].color[2] = 1;
 
-    led_color[GREEN_COLOR].color[0] = 0;
-    led_color[GREEN_COLOR].color[1] = 1;
-    led_color[GREEN_COLOR].color[2] = 0;
+    led_color[GREEN_COLOR].color[0] = 1;
+    led_color[GREEN_COLOR].color[1] = 0;
+    led_color[GREEN_COLOR].color[2] = 1;
 
-    led_color[YELLOW_COLOR].color[0] = 1;
-    led_color[YELLOW_COLOR].color[1] = 1;
-    led_color[YELLOW_COLOR].color[2] = 0;
+    led_color[YELLOW_COLOR].color[0] = 0;
+    led_color[YELLOW_COLOR].color[1] = 0;
+    led_color[YELLOW_COLOR].color[2] = 1;
   }
 }
 /* Make color for LED */
@@ -70,4 +72,11 @@ void ledRGB(int index, int color_en1, int color_en2) {
     default:
       break;
   } 
+}
+
+void scan_led() {
+  ledRGB(index, color_En1, color_En2);
+
+  if (index >= N0_NODE_CAR - 1) index = 0;
+  else index++;
 }
