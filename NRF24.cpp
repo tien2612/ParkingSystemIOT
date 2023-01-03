@@ -1,8 +1,9 @@
 #include "NRF24.h"
 
-RF24 radio(7, 8); // CE, CSN
+Package dataReceive = {};
+Package dataTransmit = {};
 
-const byte address[6][6] = {"PKIOT1", "PKIOT2"}; //0, 1
+const byte addresses[][6] = {"PKIOT1"};
 
 int booking_slot = -1;
 int *UID = {0};
@@ -18,7 +19,7 @@ int* check_booking_receive() {
   return NULL;
 }
 
-void confirm_data_receive(String msg) {
+void confirm_data_receive(int code) {
   // send msg confirm to gateway
 }
 
@@ -52,7 +53,7 @@ int *parse_command(String cmd) {
   } else if (data_split[0] == RESERVED_Reg) {
     // slot + UID
     data_buffer_return[0] = data_split[1].toInt();
-    int k = 0;
+    int k = 1;
     String data_temp = "";
     
     for (int i = 0; i < data_split[2].length(); i++) {
@@ -70,3 +71,7 @@ int *parse_command(String cmd) {
   
   return data_buffer_return;
 }
+
+
+
+

@@ -11,7 +11,18 @@
 #define GOT_BOOK        20
 #define NOTHING         21
 
-extern RF24 radio; // CE, CSN
+extern const byte addresses[][6];
+
+
+struct package {
+  int id = 123;
+  char text[100] = "TEXT TO SENT";
+};
+
+typedef struct package Package;
+
+extern Package dataReceive;
+extern Package dataTransmit;
 
 /* Address to comm with gateway */
 extern const byte address[6][6];
@@ -23,7 +34,7 @@ extern int *UID;
 
 int* check_booking_receive();
 
-void confirm_data_receive(String msg);
+void confirm_data_receive(int code);
 
 int *parse_command(String cmd);
 #endif
