@@ -3,7 +3,7 @@
 Package dataReceive = {};
 Package dataTransmit = {};
 
-const byte addresses[][6] = {"PKIOT1"};
+
 
 int booking_slot = -1;
 int *UID = {0};

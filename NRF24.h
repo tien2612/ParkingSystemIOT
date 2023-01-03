@@ -11,9 +11,6 @@
 #define GOT_BOOK        20
 #define NOTHING         21
 
-extern const byte addresses[][6];
-
-
 struct package {
   int id = 123;
   char text[100] = "TEXT TO SENT";
@@ -25,7 +22,7 @@ extern Package dataReceive;
 extern Package dataTransmit;
 
 /* Address to comm with gateway */
-extern const byte address[6][6];
+extern const byte addresses[][6];
 
 /* Data receive from radio */
 extern int booking_slot;

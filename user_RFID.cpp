@@ -10,20 +10,3 @@ int check_id(int *user_id, int *data) {
   
   return 1;
 }
-
-void send_new_data_to_gateWay(int slot, int status, String UID) {
-  /* Check which type data send to gateway, UID or slot status
-  * if data send is UID */
-  if ( (status != GREEN_COLOR || status != RED_COLOR || status != YELLOW_COLOR)) {
-    // use RF
-    String data_send = "!UID:";
-
-    data_send += UID + "#";
-    // send here
-    // ....
-  } else { // data send is slot status format !SLOT:slot-value:status-value#
-    String data_send = "!SLOT:" + String(slot) + ":" + String(status) + "#";
-    // send here
-    // ..
-  }
-}

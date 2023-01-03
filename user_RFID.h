@@ -35,6 +35,5 @@ extern user_data_ID user_ID[N0_USER_ID];
 
 int check_id(int *arr, int *data);
 
-void send_new_data_to_gateWay(int slot, int status, int *uid);
 
 #endif

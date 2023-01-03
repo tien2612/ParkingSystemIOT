@@ -1,3 +1,5 @@
+#ifndef NODE_1
+#define NODE_1
 #include <EEPROM.h>
 #include <Arduino.h>
 #include <HCSR04.h>
@@ -8,11 +10,21 @@
 #include "eeprom.h"
 #include "NRF24.h"
 #include "TimerOne.h"
+
+/* Address to comm with gateway */
+#if defined NODE_1
+const byte addresses[][6] = {"PKIOT1"};
+#elif defined(NODE_2)
+const byte addresses[][6] = {"PKIOT2"};
+#endif
+
 RF24 myRadio(7, 8); // CE, CSN
 
 user_data_ID user_booking_slot[N0_NODE_CAR * 2] = { {0, 0, 0, 0} };
 
 user_data_ID user_ID[N0_USER_ID] = { {0} };
+
+byte current_status[N0_NODE_CAR * 2] = {GREEN_COLOR};
 int *data_slot_rcv = new int[10];
 
 /* RFID declare */
@@ -43,8 +55,11 @@ void init_radio() {
   myRadio.setDataRate( RF24_250KBPS );
   
   myRadio.openReadingPipe(1, addresses[0]);
+  // myRadio.openReadingPipe(1, addresses[1]);
   myRadio.startListening();
+
 }
+
 void init_slot() {
   for (int i = 0; i < N0_NODE_CAR; i++) {
     slot_car_status[i].startMillisCar = millis();
@@ -108,12 +123,33 @@ void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
   }
 }
 
+void assign_color() {
+  int slot = 0;
+  #if defined SLOT_2
+      slot += 2;
+  #endif
+  current_status[slot] = color_En1;
+  current_status[slot + 1] = color_En2;
+}
+
+int check_any_changes() {
+  int slot = 0;
+  #if defined SLOT_2
+      slot += 2;
+  #endif
+  
+  if (current_status[slot] != color_En1) return 2;
+  if (current_status[slot + 1] != color_En2) return 3;
+
+  return 0;
+}
+
 void restoreDataFromEEPROM() {
     //eepromWriteStruct(address_user_ID, user_ID, sizeof(user_ID));
     eepromReadStruct(address_slot_ID, user_booking_slot, sizeof(user_booking_slot));
     color_En1 = EEPROM.read(address_color_of_slot[0]);
     color_En2 = EEPROM.read(address_color_of_slot[1]);
-
+    assign_color();
     current_user = EEPROM.read(address_number_of_users);
 }
 
@@ -169,6 +205,44 @@ void receive_from_radio() {
   }
 }
 
+void send_package(String str){
+  myRadio.stopListening();
+  // send_data_nrf.id = send_data_nrf.id + 1;
+  for(int i = 0; i < str.length();i++){
+    dataTransmit.text[i] = str[i];
+  }
+  // Serial.print("\n");
+  myRadio.openWritingPipe(addresses[0]);
+  
+  // Format : !RESERVED:slot:uid#
+  if (!myRadio.write(&dataTransmit, sizeof(dataTransmit))) {
+    // Serial.println("Don't send to NRF");
+  }
+  myRadio.openReadingPipe(1, addresses[0]);
+  myRadio.startListening();
+  // clear data;  
+  for(int i = 0; i < 30; i++){
+    dataTransmit.text[i] = '\0';
+  }
+  delay(100);
+}
+
+void send_new_data_to_gateWay(int slot, int status, String UID) {
+  /* Check which type data send to gateway, UID or slot status
+  * if data send is UID */
+  #if defined SLOT_2
+    slot += 2;
+  #endif
+  String data_send;
+    if ( UID != "") {
+      // use RF
+      data_send += "!UID:" + UID + "#";
+    } else { // data send is slot status format !SLOT:slot-value:status-value#
+      data_send = "!SLOT:" + String(slot) + ":" + String(status) + "#";
+    }
+    send_package(data_send);
+}
+
 void setup() {
   currentMillis = millis();
   init_slot();
@@ -218,6 +292,7 @@ void setup() {
 
 void loop() {
   currentMillis = millis();
+  assign_color();
   readRfid(rfid, 0);
   readRfid(rfid2, 1);
   // /* Check if any package received from gateway */
@@ -232,6 +307,21 @@ void loop() {
 
   updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
   updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
+
+  
+  if (check_any_changes() == 2) {
+    int slot = 0;
+    #if defined SLOT_2
+      slot += 2;
+    #endif
+    send_new_data_to_gateWay(slot, color_En1, "");
+  } else {
+    int slot = 0;
+    #if defined SLOT_2
+      slot += 2;
+    #endif
+    send_new_data_to_gateWay(slot + 1, color_En2, "");
+  }
 }
 
 
@@ -281,3 +371,4 @@ void printRfid()
  }
 }
 
+#endif
