@@ -6,6 +6,7 @@ Servo servo_s1;
 Servo servo_s2;
 
 void open_slot(int slot) {
+  Serial.print("open slot"); Serial.println(slot);
   if (slot == 1) {
     servo_s1.write(100);
   } else if (slot == 2) {
