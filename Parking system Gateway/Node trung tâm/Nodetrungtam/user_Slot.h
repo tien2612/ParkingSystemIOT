@@ -18,12 +18,13 @@ const int servo_checkin = 5;
 extern Servo servo;
 
 extern LiquidCrystal_I2C lcd; //Khai báo địa chỉ I2C (0x27 or 0x3F) và LCD 16x02
-
+extern bool flag_closed_barrier;
 void setupLCD(void);
 void open_barrier(void);
 void close_barrier(void);
 
 void displayLCD(void);
+void updateDisplayLCD(int slot);
 
 extern int status_slot[N0_NODE_CAR * N0_SLOT_IN_NODE];
 

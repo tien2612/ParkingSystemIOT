@@ -5,7 +5,9 @@ Servo servo;
 
 LiquidCrystal_I2C lcd(0x3F,16,2);
 
-int status_slot[N0_NODE_CAR * N0_SLOT_IN_NODE];
+bool flag_closed_barrier = 0;
+
+int status_slot[N0_NODE_CAR * N0_SLOT_IN_NODE] = {0};
 
 void open_barrier(){
   servo.write(90);
@@ -17,7 +19,8 @@ void close_barrier(){
 
 void setupLCD(void){
   lcd.begin(); //Khởi tạo màn hình LCD
-  lcd.backlight(); //Bật đèn màn hình lCD    
+  lcd.backlight(); //Bật đèn màn hình lCD 
+  displayLCD();   
   Serial.println("Set up LCD");
 }
 
@@ -28,7 +31,7 @@ void displayLCD(){
   // lcd.print("1.RESERV");
   String display = "";
   for (int i = 1 ; i < 5; i++){
-    display += String(i) + "-";
+    display += String(i) + ":";
       switch(i){
         case 1: // slot 1
         lcd.setCursor(0, 0);   
@@ -80,4 +83,36 @@ void displayLCD(){
   // //lcd.noDisplay();
   // lcd.clear();
   // delay(1000); 
+}
+
+void updateDisplayLCD(int slot){ 
+    String display = "";
+    display += String(slot) + ":";
+      switch(slot){
+        case 1: // slot 1
+        lcd.setCursor(0, 0);   
+        break;   
+        case 2: // slot 2
+        lcd.setCursor(8, 0);   
+        break;  
+        case 3: // slot 3
+        lcd.setCursor(0, 1);   
+        break;               
+        case 4: // slot 4
+        lcd.setCursor(8, 1);   
+        break;                      
+      }
+      switch(status_slot[slot-1]){
+        case 0: // red  // "1-FULL  "
+        display += "FULL  ";
+        break;   
+        case 1: // green "2-EMPTY "
+        display += "EMPTY "; 
+        break;  
+        case 2: // Yellow //3-RESER ""
+        display += "RESER ";  
+        break;                                    
+      }
+      lcd.print(display); 
+      display = "";
 }
