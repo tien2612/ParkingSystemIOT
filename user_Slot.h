@@ -14,8 +14,8 @@
 #define TIME_VALID    3000
 #define TIME_WAITING  30000
 
-const int servo_slot1 = 3;
-const int servo_slot2 = 7;
+const int servo_slot1 = 0;
+const int servo_slot2 = 15;
 
 /* Servo */
 extern Servo servo_s1;
