@@ -70,9 +70,7 @@ void loop() {
     Firebase.getInt(firebaseData,path + "/Slot/Slot1/status" );
     status = firebaseData.intData();
 
-    data += "!RESERVED:";
-    data += String(slot) + ":" + UID;
-    data += "#";
+
     // Serial.println(data);
     delay(100);        
       
@@ -80,6 +78,9 @@ void loop() {
   // data = "02,02";
   
   if (millis() - timer > 2000){
+    data += "!RESERVED:";
+    data += String(slot) + ":" + UID;
+    data += "#";
     timer = millis();
     ESP8266_softSerial.println(data);
     Serial.println("Gui du lieu toi Arduino");  

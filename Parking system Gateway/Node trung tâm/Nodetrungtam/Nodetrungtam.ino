@@ -160,57 +160,6 @@ void setup() {
   
 }
 
-// int *data_buffer_return = new int[10];
-
-// int *parse_command(String cmd) {
-//   cmd.remove(0, 1);
-//   cmd.remove(cmd.length() - 1, 1);
-//   Serial.println(cmd);
-//   const char UID_Reg[] = "UID";
-//   const char SLOT_Reg[] = "SLOT";
-//   const char RESERVED_Reg[] = "RESERVED";
-//   String data_split[10]; 
-//   String data = "";
-//   int j = 0;
-//   for (int i = 0; i < cmd.length(); i++) {
-//     if (cmd[i] == ':') {
-//       data_split[j] = data;
-//       data = "";
-//       j++;
-//     } else data += cmd[i];
-//   }
-  
-//   data_split[j] = data;
-
-//   Serial.println(data_split[0]);
-//   if (data_split[0] == UID_Reg) {
-//     // UID
-//   } else if (data_split[0] == SLOT_Reg) {
-//     // slot + status
-//   } else if (data_split[0] == RESERVED_Reg) {
-//     // slot + UID
-//     data_buffer_return[0] = data_split[1].toInt();
-//     int k = 1;
-//     String data_temp = "";
-    
-//     for (int i = 0; i < data_split[2].length(); i++) {
-     
-//       if (data_split[2][i] == ' ') {
-        
-//         data_buffer_return[k] = data_temp.toInt();
-//         data_temp = "";
-//         k++;
-//       } else data_temp += data_split[2][i];
-//     }
-
-//     data_buffer_return[k] = data_temp.toInt();
-//   }
-  
-//   return data_buffer_return;
-// }
-
-// int *arr = new int[10];
-
 void Receive_Data_From_NRF(void){
     if ( myRadio.available()) {
     while (myRadio.available()){
@@ -249,7 +198,7 @@ void Transmit_Data_To_NRF(void){
   // Format : !RESERVED:slot:uid#
   if (!myRadio.write(&send_data_nrf, sizeof(send_data_nrf))) {
     Serial.println("Don't send to NRF");
-  }
+  } else { Serial.println("Send to NRF successfull");}
   myRadio.openReadingPipe(1, addresses[0]);
   myRadio.startListening();
   // clear data;  
