@@ -12,7 +12,7 @@
 
 #define UNDEFINED     999
 #define TIME_VALID    3000
-#define TIME_WAITING  30000
+#define TIME_WAITING  100000
 
 /* Servo */
 extern ServoTimer2 servo_s1;

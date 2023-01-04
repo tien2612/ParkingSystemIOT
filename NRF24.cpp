@@ -48,8 +48,10 @@ int *parse_command(String cmd) {
 
   if (data_split[0] == UID_Reg) {
     // UID
+    return NULL;
   } else if (data_split[0] == SLOT_Reg) {
     // slot + status
+    return NULL;
   } else if (data_split[0] == RESERVED_Reg) {
     // slot + UID
     data_buffer_return[0] = data_split[1].toInt();

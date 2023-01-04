@@ -1,5 +1,5 @@
-#ifndef NODE_2
-#define NODE_2
+#ifndef NODE_1
+#define NODE_1
 #include <EEPROM.h>
 #include <Arduino.h>
 #include <HCSR04.h>
@@ -13,9 +13,9 @@
 
 /* Address to comm with gateway */
 #if defined NODE_1
-const byte addresses[][6] = {"PKIOT1"};
+const byte addresses[][6] = {"PKIOT0","PKIOT1"};
 #elif defined(NODE_2)
-const byte addresses[][6] = {"PKIOT2"};
+const byte addresses[][6] = {"PKIOT0","PKIOT2"};
 #endif
 
 RF24 myRadio(7, 8); // CE, CSN
@@ -52,13 +52,20 @@ void init_radio() {
   myRadio.begin(); 
   myRadio.setAutoAck(1);
   myRadio.setRetries(5, 15);
+  // #if defined NODE_1
   myRadio.setChannel(115); 
+  // #elif defined(NODE_2)
+  //   myRadio.setChannel(100); 
+  // #endif
   myRadio.setPALevel(RF24_PA_MAX);
   myRadio.setDataRate( RF24_250KBPS );
-  
-  myRadio.openReadingPipe(1, addresses[0]);
-  myRadio.startListening();
+  #if defined NODE_1
+    myRadio.openReadingPipe(1, addresses[0]);
+  #elif defined(NODE_2)
+    myRadio.openReadingPipe(1, addresses[0]);
+  #endif
 
+  myRadio.startListening();
 }
 
 void init_slot() {
@@ -126,18 +133,18 @@ void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
 
 void assign_color() {
   int slot = 0;
-  #if defined NODE_2
-      slot += 2;
-  #endif
+  // #if defined NODE_2
+  //     slot += 2;
+  // #endif
   current_status[slot] = color_En1;
   current_status[slot + 1] = color_En2;
 }
 
 int check_any_changes() {
   int slot = 0;
-  #if defined NODE_2
-      slot += 2;
-  #endif
+  // #if defined NODE_2
+  //     slot += 2;
+  // #endif
   
   if (current_status[slot] != color_En1) return 2;
   if (current_status[slot + 1] != color_En2) return 3;
@@ -162,6 +169,7 @@ void receive_reserved_booking_slot(int slot, int *UID, int id) {
     if (slot < 2) return;
     else slot -= 2;
   #endif
+  
   slot_car_status[slot].status = SLOT_RESERVED;
   slot_car_status[slot].is_slot_reserved = true;
   user_booking_slot[slot].startWaitingCustomer = true;
@@ -170,6 +178,7 @@ void receive_reserved_booking_slot(int slot, int *UID, int id) {
   int index = 0;
   for (int i = 0; i < 4; i++) {
     user_booking_slot[slot].ID[index++] = *UID++; 
+    
   }
   
   //eepromWriteStruct(address_slot_ID, user_booking_slot, sizeof(user_booking_slot));
@@ -177,6 +186,7 @@ void receive_reserved_booking_slot(int slot, int *UID, int id) {
   close_slot(slot);
   confirm_data_receive(id);
   user_booking_slot[slot].currentTimeOut = millis();
+  // for (int i = 0; i < 4; i++) Serial.println(user_booking_slot[slot].ID[i]);
 }
 
 void clear_user_slot(int slot) {
@@ -184,6 +194,7 @@ void clear_user_slot(int slot) {
     user_booking_slot[slot].ID[i] = -1;
   }
 }
+
 void check_customer_arrived(int slot) {
   /* If the slot hadn't got reserved, then return */
   if (slot_car_status[slot].is_slot_reserved == 0) return;
@@ -208,8 +219,9 @@ void receive_from_radio() {
     // data.remove(0, 4);
     /* Parse command from radio */
     data_slot_rcv = parse_command(data);
-    // for (int i = 0; i < 5; i++) Serial.println(data_slot_rcv[i]);
-    // Serial.print("\n");
+
+    if (data_slot_rcv == NULL) return;
+      
     receive_reserved_booking_slot(data_slot_rcv[0], &data_slot_rcv[1], dataReceive.id);
     delay(20);
   } else {
@@ -223,13 +235,21 @@ void send_package(String str){
   for(int i = 0; i < str.length();i++){
     dataTransmit.text[i] = str[i];
   }
-  myRadio.openWritingPipe(addresses[0]);
+  myRadio.openWritingPipe(addresses[1]);
   
-  // Format : !RESERVED:slot:uid#
+  // Format : !RESERVED:slost:uid#
   if (!myRadio.write(&dataTransmit, sizeof(dataTransmit))) {
     // Serial.println("Don't send to NRF");
+  } else {
+    // Serial.print("Sent"); Serial.println(str);
   }
-  myRadio.openReadingPipe(1, addresses[0]);
+
+  #if defined NODE_1
+    myRadio.openReadingPipe(1, addresses[0]);
+  #elif defined(NODE_2)
+    myRadio.openReadingPipe(1, addresses[0]);
+  #endif
+  
   myRadio.startListening();
   // clear data;  
   for(int i = 0; i < 30; i++){
@@ -255,6 +275,7 @@ void send_new_data_to_gateWay(int slot, int status, String UID) {
 }
 
 void setup() {
+  
   currentMillis = millis();
   init_slot();
   SPI.begin();    
@@ -289,7 +310,6 @@ void setup() {
 }
 
 void loop() {
-  // scan_led();
   currentMillis = millis();
   assign_color();
   readRfid(rfid, 0);
@@ -321,8 +341,18 @@ void loop() {
 void readRfid(class RFID rfid, int slot)
 {
   int count = 0;
+  int temp[4];
+  if (slot == 0) {
+    for (int i = 0; i < 4; i++) {
+      temp[i] = user_booking_slot[slot].ID[i];
+      // Serial.println(temp[i]);
+    }
+  }
+
   if (rfid.isCard())
   {
+    // for (int i = 0; i < 4; i++) Serial.println(temp[i]);
+
     if (rfid.readCardSerial())
     {
       for (int i = 0; i < 4; i++)
@@ -330,7 +360,11 @@ void readRfid(class RFID rfid, int slot)
         RFID = rfid.serNum[i];
         nuidPICC[i] = RFID;
         cardNum += RFID; // store RFID value into string "cardNum" and concatinate it with each iteration
-        if (user_booking_slot[slot].ID[i] == nuidPICC[i]) count++;
+        // Serial.println(RFID);
+        // Serial.println(user_booking_slot[slot].startWaitingCustomer);
+        
+        if (user_booking_slot[slot].ID[i] == nuidPICC[i] || temp[i] == nuidPICC[i]) count++;
+        
       }
     }
 
