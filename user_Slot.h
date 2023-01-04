@@ -1,8 +1,8 @@
 #ifndef user_Slot_h
 #define user_Slot_h
 
-#include "Arduino.h"
-#include "Servo.h"
+#include <Arduino.h>
+#include <ServoTimer2.h>
 
 #define N0_NODE_CAR   2
 
@@ -14,12 +14,12 @@
 #define TIME_VALID    3000
 #define TIME_WAITING  30000
 
-const int servo_slot1 = 0;
-const int servo_slot2 = 15;
-
 /* Servo */
-extern Servo servo_s1;
-extern Servo servo_s2;
+extern ServoTimer2 servo_s1;
+extern ServoTimer2 servo_s2;
+
+extern const int servo_slot1;
+extern const int servo_slot2;
 
 struct slot_status {
   float distance;
