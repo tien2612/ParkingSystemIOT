@@ -1,6 +1,7 @@
 #ifndef myColor_h
 #define myColor_h
 #include "Arduino.h"
+#include "eeprom.h"
 
 #define RED_COLOR     0
 #define YELLOW_COLOR  1
@@ -18,6 +19,9 @@ extern int color_En1;
 extern int color_En2;
 //extern int color_En3;
 
+/* Index of led RGB */
+extern int index;
+
 struct ledColor {
   int color[3];
 };
@@ -33,4 +37,6 @@ void writeLed(int color);
 /* Make color for each index of LED */
 void ledRGB(int index, int color_en1, int color_en2);
 
+/* Updating all led by switching sequentially */ 
+void scan_led();
 #endif
