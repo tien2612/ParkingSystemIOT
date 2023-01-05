@@ -11,6 +11,7 @@
 #define GOT_BOOK        20
 #define NOTHING         21
 
+#define RETRIES_TIMES   5
 struct package {
   int id = 123;
   char text[100] = "TEXT TO SENT";

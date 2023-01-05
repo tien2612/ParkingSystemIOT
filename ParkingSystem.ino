@@ -1,5 +1,5 @@
-#ifndef NODE_2
-#define NODE_2
+#ifndef NODE_1
+#define NODE_1
 #include <EEPROM.h>
 #include <Arduino.h>
 #include <HCSR04.h>
@@ -227,10 +227,16 @@ void send_package(String str){
   // myRadio.openWritingPipe(addresses[0]);
   
   // Format : !RESERVED:slost:uid#
-  if (!myRadio.write(&dataTransmit, sizeof(dataTransmit))) {
-    // Serial.println("Don't send to NRF");
-  } else {
-    // Serial.print("Sent"); Serial.println(str);
+  int send_retry = millis();
+  for (int i = 0; i < RETRIES_TIMES; i++) {
+    if (millis() - send_retry >= 1000) {
+      send_retry = millis();
+      if (!myRadio.write(&dataTransmit, sizeof(dataTransmit))) {
+        // Serial.println("Don't send to NRF");
+      } else {
+        // Serial.print("Sent"); Serial.println(str);
+      }
+    }
   }
 
   // myRadio.openReadingPipe(1, addresses[0]);
@@ -298,7 +304,7 @@ void setup() {
 void loop() {
   currentMillis = millis();
   // send_package("Test");
-  delay(200);
+  // scan_led();
   assign_color();
   readRfid(rfid, 0);
   readRfid(rfid2, 1);
@@ -310,7 +316,7 @@ void loop() {
     check_customer_arrived(i);
   }
 
-  //check_slot_status();
+  check_slot_status();
 
   updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
   updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);

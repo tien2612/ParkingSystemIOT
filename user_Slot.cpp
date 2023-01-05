@@ -1,5 +1,5 @@
-#ifndef NODE_2
-#define NODE_2
+#ifndef NODE_1
+#define NODE_1
 #include "user_Slot.h"
 
 slot_status slot_car_status[N0_NODE_CAR];
@@ -19,8 +19,8 @@ void open_slot(int slot) {
       delay(215);
       servo_s2.write(1500);  //pulse width for 90 degree
     #elif defined(NODE_2)
-      servo_s2.attach(servo_slot2);
-      servo_s2.write(2500);  //pulse width for 90 degree
+      servo_s1.attach(servo_slot1);
+      servo_s1.write(1500);  //pulse width for 90 degree
     #endif
   } else if (slot == 0) {
     #if defined NODE_1
@@ -31,7 +31,7 @@ void open_slot(int slot) {
 
     #elif defined(NODE_2)
       servo_s1.attach(servo_slot1);
-      servo_s1.write(2500);  //pulse width for 90 degree
+      servo_s1.write(1500);  //pulse width for 90 degree
     #endif
   }
 }
@@ -46,8 +46,8 @@ void close_slot(int slot) {
       delay(220);
       servo_s2.write(1500);  //pulse width for 90 degree
     #elif defined(NODE_2)
-      servo_s2.attach(servo_slot2);
-      servo_s2.write(1500);  //min pulse width for 0 degree
+      servo_s1.attach(servo_slot1);
+      servo_s1.write(2500);  //min pulse width for 0 degree
     #endif
   } else if (slot == 0) {
     #if defined NODE_1
@@ -57,7 +57,7 @@ void close_slot(int slot) {
     servo_s1.write(1500);  //pulse width for 90 degree
     #elif defined(NODE_2)
       servo_s1.attach(servo_slot1);
-      servo_s1.write(1500);  //min pulse width for 0 degree
+      servo_s1.write(2500);  //min pulse width for 0 degree
     #endif
   }
 }
