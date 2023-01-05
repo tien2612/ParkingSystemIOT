@@ -1,6 +1,9 @@
 #include "eeprom.h"
 
 int address_number_of_users = 0;
+int address_status = 900;
+
+
 
 /* Read data from EEPROM */
 void eepromRead(uint16_t addr, void* output, uint16_t length) {
@@ -42,9 +45,10 @@ int check_if_new_id(int *UID) {
     if (UID[0] == EEPROM.read(i) && UID[1] == EEPROM.read(i + 1) && UID[2] == EEPROM.read(i + 2)
                                  && UID[3] == EEPROM.read(i + 3) ) return 0;
 
-    
-                     
+         
   }
+    
 
   return 1;
 }
+

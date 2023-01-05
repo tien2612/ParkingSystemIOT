@@ -5,6 +5,8 @@
 
 #include <Arduino.h>
 
+#include <Servo.h>
+
 #include <SoftwareSerial.h>
 
 #include <Wire.h> //Gọi thư viện I2C để sử dụng các thư viện I2C
@@ -15,9 +17,7 @@
 #include <MFRC522.h>
 
 #include "RFID.h"
-
 #include "eeprom.h"
-
 #include "user_Slot.h"
 #include "user_RFID.h"
 
@@ -26,9 +26,12 @@
 
 #define CE_PIN         7
 #define CSN_PIN          8
+# define SERVO_PIN     5
 
 RF24 myRadio(CE_PIN,CSN_PIN);// 7 : CE and 8 : CSN
-const byte addresses[6][6] = {"PKIOT1", "KIOT2", "KIOT3" }; // Node 0(trungtam) : Node 1 : Node 2
+// const byte addresses[6][6] = {"PKIOT0","PKIOT1", "PKIOT2"  }; // Node 0(trungtam) : Node 1 : Node 2
+
+const byte addresses[6] = {'x','y','z'};
 
 SoftwareSerial Arduino_softSerial(A2, A3); // RX: 5 - TX: 6
 
@@ -57,7 +60,15 @@ String receive_data_esp;
 String cardNum;
 int RFID;
 
+unsigned long timer0 = 0;
+unsigned long timer1 = 0;
+
 // int count = 0;
+void restoreDataFromEEPROM() {
+  for (int i = 0; i< 4; i++){
+    status_slot[i] = EEPROM.read(address_number_of_users+i);
+  }
+}
 
 void comparser_command_data(String cmd){
   
@@ -112,7 +123,9 @@ void comparser_command_data(String cmd){
       status_slot[slot] = status;
       updateDisplayLCD(slot);
       Transmit_Data_To_ESP();
-      
+      eepromWrite(address_status,&status_slot[0],4);
+      delay(50);
+  
   } else if (data_split[0] == RESERVED_Reg) {// Format : !RESERVED:slot:uid#
       int slot = data_split[1].toInt();
       // Serial.println(slot);   
@@ -121,49 +134,72 @@ void comparser_command_data(String cmd){
       // Serial.println(data_split[2]);        
       status_slot[slot] = 2;
       updateDisplayLCD(slot);      
-      Transmit_Data_To_NRF();      
+      Transmit_Data_To_NRF();
+      Feedback_ESP(slot);      
     }
 }
 
+void GetDistance(void){
+    if (millis() - timer0 > 1000){
+        timer0 = millis();
+        int distance = hc.dist();
+        if (distance <= 5){
+          detected_car = 1;
+          // Serial.println(distance);       
+          // Serial.println("Detected Car");
+        } else {
+          detected_car = 0;
+          // Serial.println(distance);  
+          // Serial.println("Khong phat hien Car");
+        }
+        delay(100);
+    // Serial.println("Open ");
+  }
+}
+
+
 void setup() {
-  Serial.begin(9600);
-
-  /* setup for RFID*/
-
-  // before();
+  Serial.begin(115200);
     
   Serial.println("initilizing RFID...");
   rfid.init(); // initilize the RFID module
   Serial.println("start ");
 
-  myRadio.begin();  
-  myRadio.setChannel(115); 
-  myRadio.setPALevel(RF24_PA_LOW);
-  myRadio.setDataRate( RF24_250KBPS );
+  myRadio.begin(); 
+  myRadio.setAutoAck(true); 
+  myRadio.setRetries(15, 15);
+  // myRadio.setChannel(80); 
+  myRadio.setPALevel(RF24_PA_MAX);
+  myRadio.setDataRate( RF24_2MBPS );
   
-  myRadio.openReadingPipe(1, addresses[0]);
+  myRadio.openWritingPipe(addresses[0]);
+  myRadio.openReadingPipe(1, addresses[1]);
+  myRadio.openReadingPipe(2, addresses[2]);
   myRadio.startListening();
 
   /////////////////
   Arduino_softSerial.begin(9600);
   
-  pinMode(servo_checkin, OUTPUT);
-  servo.write(0);
+  servo.attach(SERVO_PIN);
+  servo.write(90);
 
   /* setup for LCD*/
-  // lcd.begin(); //Khởi tạo màn hình LCD
-  // lcd.backlight(); //Bật đèn màn hình lCD  
   setupLCD();
 
-  // SPI.begin();    
-  // mfrc522.PCD_Init(); 
+  // for(int i=0; i< EEPROM.length(); i++){
+  //   EEPROM.write(i,0);
+  // }  
   
+  // restoreDataFromEEPROM();
+  // for (int i = 0; i< 30 ; i++){    
+  //   Serial.println(EEPROM.read(i));
+  // }
 }
 
 void Receive_Data_From_NRF(void){
-    if ( myRadio.available()) {
+  if ( myRadio.available()) {
     while (myRadio.available()){
-        // Serial.println("aaaa"); // Format : !UID:String# or !SLOT:slot:status#  
+      // Serial.println("Da nhan du lieu"); // Format : !UID:String# or !SLOT:slot:status#  
       myRadio.read( &receive_data_nrf, sizeof(receive_data_nrf) );
     }
     Serial.println("Receive data from NRF: ");
@@ -176,7 +212,7 @@ void Receive_Data_From_NRF(void){
     delay(100);
     // Serial.print("\n");
   }
-  delay(200);
+  // delay(10);
 }
 
 void Transmit_Data_To_NRF(void){
@@ -193,23 +229,27 @@ void Transmit_Data_To_NRF(void){
   
   Serial.println(send_data_nrf.text);
   // Serial.print("\n");
-  myRadio.openWritingPipe(addresses[0]);
+  // myRadio.openWritingPipe(addresses[0]);
+  // myRadio.setRetries(15,15);
   
   // Format : !RESERVED:slot:uid#
   if (!myRadio.write(&send_data_nrf, sizeof(send_data_nrf))) {
     Serial.println("Don't send to NRF");
   } else { Serial.println("Send to NRF successfull");}
-  myRadio.openReadingPipe(1, addresses[0]);
+  // myRadio.openReadingPipe(1, addresses[0]);
+  // myRadio.openReadingPipe(1, addresses[2]);  
+  
   myRadio.startListening();
   // clear data;  
   for(int i = 0; i< 30; i++){
     send_data_nrf.text[i] = '\0';
   }
-  delay(100);
+  // delay(10);
 }
 
 void Receive_Data_From_ESP(void){
     /* Received data from ESP8266 */
+        // if ( myRadio.available()) {    
   while(Arduino_softSerial.available()) {
     receive_data_esp = Arduino_softSerial.readStringUntil('\n');
     receive_data_esp.remove(receive_data_esp.length() - 1, 1);
@@ -232,61 +272,118 @@ void Transmit_Data_To_ESP(void){
   // Serial.println(data);
   Serial.println(send_data_esp);
   send_data_esp = "";
+  for(int i = 0; i< 30; i++){
+    receive_data_nrf.text[i] = '\0';
+  }
 }
 
+void Feedback_ESP(int slot){
+    send_data_esp = "!OK"+ String(slot+1) +  + "#";
+    Arduino_softSerial.println(send_data_esp);
+    Serial.println(send_data_esp);
+    Serial.println("Phan hoi toi ESP8266 đã nhận đặt Slot" + String(slot + 1));
+    send_data_esp = "";
+}
 
 void loop() {
-  // Serial.println("abc");
   // comparser_command_data("!UID:100 15 20 30#");
   // comparser_command_data("!SLOT:2:1#"); 
-  // comparser_command_data("!RESERVED:2:10 78 26 99#");  
-
-  // for (int i = 0; i < 4 ; i++){
-  //     status_slot[i] = count % 3;
-  //     count++;
-  //     displayLCD();
-  //     delay(1000);
-  // }
-  // lcd.blink();
+  // comparser_command_data("!RESERVED:2:10 78 26 99#"); 
+  
   readRfid();
   printRfid();
+  GetDistance();
+
+    // if (millis() - timer0 > 1000){
+    //   timer0 = millis();
+    //   servo.write(0);
+    //   Serial.println("Open ");
+    //   // Serial.println(hc.dist());
+    // }
+
+    // if (millis() - timer1 > 2000){
+    //   timer1 = millis();
+    //   servo.write(90);
+    //   Serial.println("Close ");
+    // }
 
   Receive_Data_From_NRF();
   Receive_Data_From_ESP();
 
-  if (check_if_new_id(UID) == 0 && flag_closed_barrier == 1){// quet the va di vao
+  if (check_if_new_id(UID) == 0 && flag_closed_barrier == 1 && detected_car == 0 //&& get_in_car == 1 
+  && is_swiped == 0 ){// quet the va xe di vao
+    Serial.print("Distance: ");
+    Serial.println(hc.dist());
+    Serial.println("1 - open ");  
     open_barrier();
-    flag_closed_barrier = 0;        
+    flag_closed_barrier = 0; 
+    get_in_car = 1 ;
+    is_swiped = 1;
+    for (int i = 0; i<4;i++){
+      UID[i] = -1;      
+    }
+    // delay(500);
   }
-
-  if (hc.dist() > 5 && flag_closed_barrier == 0){ // thay xe da di vao thi dong cong 
+  else if (detected_car == 1 && flag_closed_barrier == 0 //&& get_in_car == 1 
+  && is_swiped == 1){ // thay xe da di vao thi dong cong 
+    Serial.print("Distance: ");
+    Serial.println(hc.dist());
+    Serial.println("2 - Close ");
       close_barrier();
       flag_closed_barrier = 1;
+    // delay(500);
+
+  } else if (detected_car == 0 && flag_closed_barrier == 1 //&& get_in_car == 1 
+  &&  is_swiped == 1 ){
+      Serial.println("Car get in completed");
+      get_in_car = 0 ;
+      is_swiped = 0;
+      // delay(500);
   }
-  
-  if (hc.dist() > 5 && flag_closed_barrier == 1){ // di tu trong ra va phat hien co xe 
+  else if (detected_car == 1 && flag_closed_barrier == 1 //&& get_in_car == 0 
+  &&  is_swiped == 0) { // di tu trong ra va phat hien co xe 
+      Serial.print("Distance: ");
+      Serial.println(hc.dist());
+      Serial.println("3 - open ");  
       open_barrier();
       flag_closed_barrier = 0;
+      get_in_car = 0;
+    // delay(5000);
   }
-
-  if (hc.dist() < 5 && flag_closed_barrier == 0 ) { // Xe di ra ngoai roi thi dong cong
-      close_barrier();
-      flag_closed_barrier = 1;
+  else if (detected_car == 0 && flag_closed_barrier == 0 //&& get_in_car == 0 
+  &&  is_swiped == 0) { // Xe di ra ngoai roi thi dong cong
+        Serial.print("Distance: ");
+        Serial.println(hc.dist());
+        Serial.println("4 - Close ");  
+        close_barrier();
+        flag_closed_barrier = 1;
+        get_in_car = 1;
+    // delay(500);
   }
+  //  lcd.setCursor(0, 0);
+  //  lcd.print("0:EMPTY 1:FULL  ");
+  // lcd.setCursor(0, 1);
+  //  lcd.print("2:RESER 3:FULL  ");   
 }
 
 void readRfid()
 {
+  // Serial.println("Card found");
   if (rfid.isCard())
   {
+    // Serial.println("Card found");
     if (rfid.readCardSerial())
     {
+      
       for (int i=0; i<4; i++)//card value: "xyz xyz xyz xyz xyz" (15 digits maximum; 5 pairs of xyz)hence 0<=i<=4 //
       {
         RFID = rfid.serNum[i];
         cardNum += RFID; // store RFID value into string "cardNum" and concatinate it with each iteration
         UID[i] = rfid.serNum[i];
       }
+      // if (check_if_new_id(&UID[0]) == 1){  
+      //     store_new_UID_into_EEPROM(&UID[0]);      
+      // }
     }
   }
   rfid.halt();
@@ -298,9 +395,9 @@ void printRfid()
  {
     Serial.println("Card found");
     Serial.print("Cardnumber: ");
-    for (int i=0; i<4; i++){
-      Serial.println(UID[i]);
-    }
+    // for (int i=0; i<4; i++){
+    //   Serial.println(UID[i]);
+    // }
     Serial.println(cardNum);
     cardNum.remove(0);
   //This is an arduino function.

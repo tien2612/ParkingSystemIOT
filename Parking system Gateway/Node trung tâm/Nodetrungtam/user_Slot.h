@@ -14,11 +14,16 @@
 #define SLOT_FULL      4
 #define SLOT_REVERSE   5
 
-const int servo_checkin = 5;
 extern Servo servo;
+extern bool flag_closed_barrier;
+extern bool detected_car;
+extern bool get_in_car;
+extern bool is_swiped;
+
+
 
 extern LiquidCrystal_I2C lcd; //Khai báo địa chỉ I2C (0x27 or 0x3F) và LCD 16x02
-extern bool flag_closed_barrier;
+
 void setupLCD(void);
 void open_barrier(void);
 void close_barrier(void);

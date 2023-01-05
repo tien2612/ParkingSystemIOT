@@ -110,9 +110,9 @@ void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
 
 void restoreDataFromEEPROM() {
     //eepromWriteStruct(address_user_ID, user_ID, sizeof(user_ID));
-    eepromReadStruct(address_slot_ID, user_booking_slot, sizeof(user_booking_slot));
-    color_En1 = EEPROM.read(address_color_of_slot[0]);
-    color_En2 = EEPROM.read(address_color_of_slot[1]);
+    // eepromReadStruct(address_slot_ID, user_booking_slot, sizeof(user_booking_slot));
+    // color_En1 = EEPROM.read(address_color_of_slot[0]);
+    // color_En2 = EEPROM.read(address_color_of_slot[1]);
 
     current_user = EEPROM.read(address_number_of_users);
 }

@@ -1,20 +1,27 @@
-#include "HardwareSerial.h"
+// #include "HardwareSerial.h"
 #include "user_Slot.h"
 
 Servo servo;
 
 LiquidCrystal_I2C lcd(0x3F,16,2);
 
-bool flag_closed_barrier = 0;
+bool flag_closed_barrier = 1;
+bool detected_car = 0;
+bool get_in_car = 1;
+extern bool is_swiped = 0;
 
-int status_slot[N0_NODE_CAR * N0_SLOT_IN_NODE] = {0};
+
+
+int status_slot[N0_NODE_CAR * N0_SLOT_IN_NODE] = {SLOT_EMPTY,SLOT_EMPTY,SLOT_EMPTY,SLOT_EMPTY};
 
 void open_barrier(){
-  servo.write(90);
+  Serial.println("Open barrier");
+  servo.write(0);
 }
 
 void close_barrier(){
-  servo.write(0);
+  Serial.println("Close barrier");
+  servo.write(90);
 }
 
 void setupLCD(void){
@@ -30,86 +37,67 @@ void displayLCD(){
   // lcd.print("1.EMPTY"); 
   // lcd.print("1.RESERV");
   String display = "";
-  for (int i = 1 ; i < 5; i++){
+  for (int i = 0 ; i < 4; i++){
     display += String(i) + ":";
       switch(i){
+        case 0: // slot 0
+        lcd.setCursor(8, 0);   
+        break;   
         case 1: // slot 1
         lcd.setCursor(0, 0);   
-        break;   
-        case 2: // slot 2
-        lcd.setCursor(8, 0);   
         break;  
-        case 3: // slot 3
+        case 2: // slot 2
         lcd.setCursor(0, 1);   
         break;               
-        case 4: // slot 4
+        case 3: // slot 3
         lcd.setCursor(8, 1);   
         break;                      
       }
       
-      switch(status_slot[i-1]){
-        case 0: // red  // "1-FULL  "
+      switch(status_slot[i]){
+        case SLOT_FULL: // red  // "1-FULL  "
         display += "FULL  ";
         break;   
-        case 1: // green "2-EMPTY "
+        case SLOT_EMPTY: // green "2-EMPTY "
         display += "EMPTY "; 
         break;  
-        case 2: // Yellow //3-RESER ""
+        case SLOT_REVERSE: // Yellow //3-RESER ""
         display += "RESER ";  
         break;                                    
       }
       lcd.print(display); 
+      Serial.println(display);
       display = "";
   }
-  // delay(5000); // chờ 5giay
-  // lcd.clear(); //Xóa LCD
-  // //lcd.noDisplay(); //Tắt LCD
-  // delay(1000);
-  
-  // //lcd.display(); //Mở LCD
-  // lcd.setCursor(1, 1); // Chọn cột 1 và hàng 1
-  // lcd.print("I LOVE ARDUINO");
-  // delay(5000);
-  // //lcd.noDisplay();
-  // lcd.clear();
-  // delay(1000);
-
-  // //lcd.display();
-  // lcd.setCursor(0, 0);
-  // lcd.print("Green Technology");
-  // lcd.setCursor(1, 1);
-  // lcd.print("I LOVE ARDUINO");
-  // delay(5000);
-  // //lcd.noDisplay();
-  // lcd.clear();
-  // delay(1000); 
 }
 
 void updateDisplayLCD(int slot){ 
     String display = "";
+    // slot += 1;
+    Serial.println("Update lcd");
     display += String(slot) + ":";
       switch(slot){
-        case 1: // slot 1
-        lcd.setCursor(0, 0);   
-        break;   
-        case 2: // slot 2
+        case 0: // slot 1
         lcd.setCursor(8, 0);   
+        break;   
+        case 1: // slot 2
+        lcd.setCursor(0, 0);   
         break;  
-        case 3: // slot 3
+        case 2: // slot 3
         lcd.setCursor(0, 1);   
         break;               
-        case 4: // slot 4
+        case 3: // slot 4
         lcd.setCursor(8, 1);   
         break;                      
       }
-      switch(status_slot[slot-1]){
-        case 0: // red  // "1-FULL  "
+      switch(status_slot[slot]){
+        case SLOT_FULL: // red  // "1-FULL  "
         display += "FULL  ";
         break;   
-        case 1: // green "2-EMPTY "
+        case SLOT_EMPTY: // green "2-EMPTY "
         display += "EMPTY "; 
         break;  
-        case 2: // Yellow //3-RESER ""
+        case SLOT_REVERSE: // Yellow //3-RESER ""
         display += "RESER ";  
         break;                                    
       }

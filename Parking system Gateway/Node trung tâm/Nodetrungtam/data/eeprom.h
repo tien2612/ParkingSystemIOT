@@ -4,13 +4,10 @@
 
 #include "Arduino.h"
 #include "user_RFID.h"
-#include "user_Slot.h"
 #include <EEPROM.h>
 
 extern int address_number_of_users;
 extern int address_status;
-
-void restoreDataFromEEPROM();
 
 void eepromRead(uint16_t addr, int* output, uint16_t length);
 

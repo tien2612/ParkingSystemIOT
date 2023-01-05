@@ -1,6 +1,6 @@
 #include "user_RFID.h"
 
-// user_data_ID user_ID[N0_USER_ID];
+user_data_ID user_ID[N0_USER_ID];
 
 // int current_index_user_ID = 0;
 
