@@ -3,8 +3,6 @@
 Package dataReceive = {};
 Package dataTransmit = {};
 
-
-
 int booking_slot = -1;
 int *UID = {0};
 

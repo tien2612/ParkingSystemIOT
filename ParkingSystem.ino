@@ -1,5 +1,5 @@
-#ifndef NODE_1
-#define NODE_1
+#ifndef NODE_2
+#define NODE_2
 #include <EEPROM.h>
 #include <Arduino.h>
 #include <HCSR04.h>
@@ -13,9 +13,9 @@
 
 /* Address to comm with gateway */
 #if defined NODE_1
-const byte addresses[][6] = {"PKIOT0","PKIOT1"};
+const byte addresses[6] = {'x','y'};
 #elif defined(NODE_2)
-const byte addresses[][6] = {"PKIOT0","PKIOT2"};
+const byte addresses[6] = {'x','z'};
 #endif
 
 RF24 myRadio(7, 8); // CE, CSN
@@ -50,20 +50,15 @@ void init_data_radio() {
 
 void init_radio() {
   myRadio.begin(); 
-  myRadio.setAutoAck(1);
-  myRadio.setRetries(5, 15);
-  // #if defined NODE_1
-  myRadio.setChannel(115); 
-  // #elif defined(NODE_2)
-  //   myRadio.setChannel(100); 
-  // #endif
+
+  // myRadio.setChannel(80); 
   myRadio.setPALevel(RF24_PA_MAX);
-  myRadio.setDataRate( RF24_250KBPS );
-  #if defined NODE_1
-    myRadio.openReadingPipe(1, addresses[0]);
-  #elif defined(NODE_2)
-    myRadio.openReadingPipe(1, addresses[0]);
-  #endif
+  myRadio.setDataRate( RF24_2MBPS );
+
+  myRadio.openReadingPipe(1, addresses[0]);
+  myRadio.openWritingPipe(addresses[1]);
+  myRadio.setAutoAck(1);
+  myRadio.setRetries(15, 15);
 
   myRadio.startListening();
 }
@@ -133,19 +128,12 @@ void updateColorCorrespondingToCarSLot(int status_slot, int &colorEn) {
 
 void assign_color() {
   int slot = 0;
-  // #if defined NODE_2
-  //     slot += 2;
-  // #endif
   current_status[slot] = color_En1;
   current_status[slot + 1] = color_En2;
 }
 
 int check_any_changes() {
-  int slot = 0;
-  // #if defined NODE_2
-  //     slot += 2;
-  // #endif
-  
+  int slot = 0;  
   if (current_status[slot] != color_En1) return 2;
   if (current_status[slot + 1] != color_En2) return 3;
 
@@ -231,11 +219,12 @@ void receive_from_radio() {
 
 void send_package(String str){
   myRadio.stopListening();
+  // myRadio.setRetries(5, 20);
   // send_data_nrf.id = send_data_nrf.id + 1;
   for(int i = 0; i < str.length();i++){
     dataTransmit.text[i] = str[i];
   }
-  myRadio.openWritingPipe(addresses[1]);
+  // myRadio.openWritingPipe(addresses[0]);
   
   // Format : !RESERVED:slost:uid#
   if (!myRadio.write(&dataTransmit, sizeof(dataTransmit))) {
@@ -244,12 +233,8 @@ void send_package(String str){
     // Serial.print("Sent"); Serial.println(str);
   }
 
-  #if defined NODE_1
-    myRadio.openReadingPipe(1, addresses[0]);
-  #elif defined(NODE_2)
-    myRadio.openReadingPipe(1, addresses[0]);
-  #endif
-  
+  // myRadio.openReadingPipe(1, addresses[0]);
+
   myRadio.startListening();
   // clear data;  
   for(int i = 0; i < 30; i++){
@@ -294,6 +279,7 @@ void setup() {
   //restoreDataFromEEPROM();
   
   servo_s1.detach();
+  
   servo_s2.detach();
   // for(int i=0; i< EEPROM.length(); i++){
   //   EEPROM.write(i,0);
@@ -311,6 +297,8 @@ void setup() {
 
 void loop() {
   currentMillis = millis();
+  // send_package("Test");
+  delay(200);
   assign_color();
   readRfid(rfid, 0);
   readRfid(rfid2, 1);
@@ -322,7 +310,7 @@ void loop() {
     check_customer_arrived(i);
   }
 
-  check_slot_status();
+  //check_slot_status();
 
   updateColorCorrespondingToCarSLot(slot_car_status[0].status, color_En1);
   updateColorCorrespondingToCarSLot(slot_car_status[1].status, color_En2);
