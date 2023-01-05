@@ -21,9 +21,6 @@ typedef struct package Package;
 extern Package dataReceive;
 extern Package dataTransmit;
 
-/* Address to comm with gateway */
-extern const byte addresses[][6];
-
 /* Data receive from radio */
 extern int booking_slot;
 extern int *UID;
