@@ -15,12 +15,12 @@ extern bool is_swiped = 0;
 int status_slot[N0_NODE_CAR * N0_SLOT_IN_NODE] = {SLOT_EMPTY,SLOT_EMPTY,SLOT_EMPTY,SLOT_EMPTY};
 
 void open_barrier(){
-  Serial.println("Open barrier");
+  // Serial.println("Open barrier");
   servo.write(0);
 }
 
 void close_barrier(){
-  Serial.println("Close barrier");
+  // Serial.println("Close barrier");
   servo.write(90);
 }
 
@@ -28,7 +28,7 @@ void setupLCD(void){
   lcd.begin(); //Khởi tạo màn hình LCD
   lcd.backlight(); //Bật đèn màn hình lCD 
   displayLCD();   
-  Serial.println("Set up LCD");
+  // Serial.println("Set up LCD");
 }
 
 void displayLCD(){
@@ -66,7 +66,7 @@ void displayLCD(){
         break;                                    
       }
       lcd.print(display); 
-      Serial.println(display);
+      // Serial.println(display);
       display = "";
   }
 }
@@ -74,7 +74,7 @@ void displayLCD(){
 void updateDisplayLCD(int slot){ 
     String display = "";
     // slot += 1;
-    Serial.println("Update lcd");
+    // Serial.println("Update lcd");
     display += String(slot) + ":";
       switch(slot){
         case 0: // slot 1

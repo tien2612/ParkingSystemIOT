@@ -18,7 +18,7 @@ FirebaseJson json;
 
 #include <SoftwareSerial.h>
 
-SoftwareSerial ESP8266_softSerial(D7, D6); // RX:D7, TX:D6
+// SoftwareSerial ESP8266_softSerial(D7, D6); // RX:D7, TX:D6
 
 String data;
 String UID;
@@ -51,27 +51,27 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   
-  ESP8266_softSerial.begin(9600);
+  // ESP8266_softSerial.begin(9600);
   // Serial.begin(115200);
   
   WiFi.begin(WIFI_SSID,WIFI_PASSWORD);
-  Serial.print("Connecting to Wi-Fi");
+  // Serial.print("Connecting to Wi-Fi");
   
   while (WiFi.status() != WL_CONNECTED){
     delay(500);
-    Serial.print(".");
+    // Serial.print(".");
   }
 
   Firebase.begin(FIREBASE_HOST,FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
   if(!Firebase.beginStream(firebaseData,path)){
-    Serial.println("REASON: "+ firebaseData.errorReason());
-    Serial.println();
+    // Serial.println("REASON: "+ firebaseData.errorReason());
+    // Serial.println();
   }
 
-  Serial.print("Connected with IP: ");
-  Serial.println(WiFi.localIP());
-  Serial.println();
+  // Serial.print("Connected with IP: ");
+  // Serial.println(WiFi.localIP());
+  // Serial.println();
   // intData();  
 }
 
@@ -154,23 +154,27 @@ void PushSlotStatus(int slot,int status){
 
 
 void loop() {
-  Serial.println("Avai") ;   
+  // Serial.println("Avai") ;   
   /* ESP8266 Received msg from Arduino */
-  while(ESP8266_softSerial.available()) {
-    Serial.println("Available") ;   
-    data = ESP8266_softSerial.readStringUntil('\n');
+  // while(ESP8266_softSerial.available()) {
+  while(Serial.available()) {
+
+    // Serial.println("Available") ;   
+    // data = ESP8266_softSerial.readStringUntil('\n');
+    data = Serial.readStringUntil('\n');
+
     /* Remove end line */
     data.remove(data.length() - 1, 1);
-    Serial.println("Du lieu nhan tu Arduino");  
-    Serial.println(data);
+    // Serial.println("Du lieu nhan tu Arduino");  
+    // Serial.println(data);
     comparser_command_data(data);
     data = "";
   }
   
   if (flag_getData == false){
-    Serial.println("Get data from firebase");  
+    // Serial.println("Get data from firebase");  
     if (Firebase.getString(firebaseData,path + "/Slot/0/UID" )){
-      Serial.println("Trong");  
+      // Serial.println("Trong");  
       
       UID = firebaseData.stringData();
       Firebase.getInt(firebaseData,path + "/Slot/0/slot" );
@@ -178,15 +182,15 @@ void loop() {
       // data += "!RESERVED:";
       data += "!RESERVED:" + String(slot) + ":" + UID + "#";
       // data += "#";
-      ESP8266_softSerial.println(data);
-      Serial.println("Gui du lieu toi Arduino");  
+      // ESP8266_softSerial.println(data);
+      // Serial.println("Gui du lieu toi Arduino");  
       Serial.println(data);
       flag_getData = true;
       data = "";
       UID = "";
       slot = -1;
     }
-      Serial.println("Ngoai");  
+      // Serial.println("Ngoai");  
 
     // delay(100);
     if (Firebase.getString(firebaseData,path + "/Slot/1/UID" )){
@@ -196,8 +200,8 @@ void loop() {
       // data += "!RESERVED:";
       data += "!RESERVED:" + String(slot) + ":" + UID +"#";
       // data += "#";
-      ESP8266_softSerial.println(data);
-      Serial.println("Gui du lieu toi Arduino");  
+      // ESP8266_softSerial.println(data);
+      // Serial.println("Gui du lieu toi Arduino");  
       Serial.println(data);
       flag_getData = true;
       data = "";
@@ -213,8 +217,8 @@ void loop() {
       // data += "!RESERVED:";
       data += "!RESERVED:" + String(slot) + ":" + UID +"#";
       // data += "#";
-      ESP8266_softSerial.println(data);
-      Serial.println("Gui du lieu toi Arduino");  
+      // ESP8266_softSerial.println(data);
+      // Serial.println("Gui du lieu toi Arduino");  
       Serial.println(data);
       flag_getData = true;
       data = "";
@@ -230,8 +234,8 @@ void loop() {
       // data += "!RESERVED:";
       data += "!RESERVED:" + String(slot) + ":" + UID +"#";
       // data += "#";
-      ESP8266_softSerial.println(data);
-      Serial.println("Gui du lieu toi Arduino");  
+      // ESP8266_softSerial.println(data);
+      // Serial.println("Gui du lieu toi Arduino");  
       Serial.println(data);
       flag_getData = true;
       data = "";
@@ -241,16 +245,16 @@ void loop() {
     }
     
   }else if (flag_getData == true){
-      Serial.println("Chuan bi delete");      
+      // Serial.println("Chuan bi delete");      
     if ( flag_received_data[0]){
-      Serial.println("Delete IUD SLOT 1");
+      // Serial.println("Delete IUD SLOT 1");
       flag_received_data[0] = false;
       Firebase.deleteNode(firebaseData,path + "/Slot/0/UID");
       flag_getData = false;
     }
     
     if ( flag_received_data[1]){
-      Serial.println("Delete IUD SLOT 2");
+      // Serial.println("Delete IUD SLOT 2");
       flag_received_data[1] = false;
       Firebase.deleteNode(firebaseData,path + "/Slot/1/UID");
       flag_getData = false;
@@ -258,7 +262,7 @@ void loop() {
     }
     
     if ( flag_received_data[2]){
-      Serial.println("Delete IUD SLOT 3");
+      // Serial.println("Delete IUD SLOT 3");
       flag_received_data[2] = false;
       Firebase.deleteNode(firebaseData,path + "/Slot/2/UID");
       flag_getData = false;
@@ -266,7 +270,7 @@ void loop() {
     }
     
     if ( flag_received_data[3]){
-      Serial.println("Delete IUD SLOT 4");
+      // Serial.println("Delete IUD SLOT 4");
       flag_received_data[3] = false;
       Firebase.deleteNode(firebaseData,path + "/Slot/3/UID");
       flag_getData = false;

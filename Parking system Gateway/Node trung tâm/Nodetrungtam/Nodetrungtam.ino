@@ -161,9 +161,9 @@ void GetDistance(void){
 void setup() {
   Serial.begin(115200);
     
-  Serial.println("initilizing RFID...");
+  // Serial.println("initilizing RFID...");
   rfid.init(); // initilize the RFID module
-  Serial.println("start ");
+  // Serial.println("start ");
 
   myRadio.begin(); 
   myRadio.setAutoAck(true); 
@@ -202,9 +202,9 @@ void Receive_Data_From_NRF(void){
       // Serial.println("Da nhan du lieu"); // Format : !UID:String# or !SLOT:slot:status#  
       myRadio.read( &receive_data_nrf, sizeof(receive_data_nrf) );
     }
-    Serial.println("Receive data from NRF: ");
+    // Serial.println("Receive data from NRF: ");
     String data = String(receive_data_nrf.text); 
-    Serial.println(data);
+    // Serial.println(data);
     // arr = parse_command(data);
     comparser_command_data(data);
     data = "";
@@ -222,7 +222,7 @@ void Transmit_Data_To_NRF(void){
   for(int i = 0; i< receive_data_esp.length();i++){
     send_data_nrf.text[i] = receive_data_esp[i];
   }
-  Serial.println("Transmit data to nrf: ");
+  // Serial.println("Transmit data to nrf: ");
   // Serial.print("Package:");
   // Serial.print(send_data_nrf.id);
   // Serial.print("\n");
@@ -234,8 +234,9 @@ void Transmit_Data_To_NRF(void){
   
   // Format : !RESERVED:slot:uid#
   if (!myRadio.write(&send_data_nrf, sizeof(send_data_nrf))) {
-    Serial.println("Don't send to NRF");
-  } else { Serial.println("Send to NRF successfull");}
+    // Serial.println("Don't send to NRF");
+  } 
+  // else { Serial.println("Send to NRF successfull");}
   // myRadio.openReadingPipe(1, addresses[0]);
   // myRadio.openReadingPipe(1, addresses[2]);  
   
@@ -250,13 +251,25 @@ void Transmit_Data_To_NRF(void){
 void Receive_Data_From_ESP(void){
     /* Received data from ESP8266 */
         // if ( myRadio.available()) {    
-  while(Arduino_softSerial.available()) {
-    receive_data_esp = Arduino_softSerial.readStringUntil('\n');
+  // while(Arduino_softSerial.available()) {
+  //   receive_data_esp = Arduino_softSerial.readStringUntil('\n');
+  //   receive_data_esp.remove(receive_data_esp.length() - 1, 1);
+  //   // Serial.println("Du lieu nhan tu ESP8266");
+  //   // Format : !RESERVED:slot:uid#
+  //   // String data = String(receive_data_nrf.text); 
+  //   Serial.println(receive_data_esp);
+  //   // arr = parse_command(data);
+  //   comparser_command_data(receive_data_esp);
+  //   receive_data_esp = ""; 
+  // }
+
+    while(Serial.available()) {
+    receive_data_esp = Serial.readStringUntil('\n');
     receive_data_esp.remove(receive_data_esp.length() - 1, 1);
-    Serial.println("Du lieu nhan tu ESP8266");
+    // Serial.println("Du lieu nhan tu ESP8266");
     // Format : !RESERVED:slot:uid#
     // String data = String(receive_data_nrf.text); 
-    Serial.println(receive_data_esp);
+    // Serial.println(receive_data_esp);
     // arr = parse_command(data);
     comparser_command_data(receive_data_esp);
     receive_data_esp = ""; 
@@ -265,8 +278,8 @@ void Receive_Data_From_ESP(void){
 
 void Transmit_Data_To_ESP(void){
   send_data_esp = String(receive_data_nrf.text);
-  Arduino_softSerial.println(send_data_esp);
-  Serial.println("Gui du lieu toi ESP8266");
+  // Arduino_softSerial.println(send_data_esp);
+  // Serial.println("Gui du lieu toi ESP8266");
    // Format : !UID:String# or !SLOT:slot:status#  
   // String data = String(send_data_esp); 
   // Serial.println(data);
@@ -279,9 +292,9 @@ void Transmit_Data_To_ESP(void){
 
 void Feedback_ESP(int slot){
     send_data_esp = "!OK"+ String(slot+1) +  + "#";
-    Arduino_softSerial.println(send_data_esp);
+    // Arduino_softSerial.println(send_data_esp);
     Serial.println(send_data_esp);
-    Serial.println("Phan hoi toi ESP8266 đã nhận đặt Slot" + String(slot + 1));
+    // Serial.println("Phan hoi toi ESP8266 đã nhận đặt Slot" + String(slot + 1));
     send_data_esp = "";
 }
 
@@ -312,9 +325,9 @@ void loop() {
 
   if (check_if_new_id(UID) == 0 && flag_closed_barrier == 1 && detected_car == 0 //&& get_in_car == 1 
   && is_swiped == 0 ){// quet the va xe di vao
-    Serial.print("Distance: ");
-    Serial.println(hc.dist());
-    Serial.println("1 - open ");  
+    // Serial.print("Distance: ");
+    // Serial.println(hc.dist());
+    // Serial.println("1 - open ");  
     open_barrier();
     flag_closed_barrier = 0; 
     get_in_car = 1 ;
@@ -326,25 +339,25 @@ void loop() {
   }
   else if (detected_car == 1 && flag_closed_barrier == 0 //&& get_in_car == 1 
   && is_swiped == 1){ // thay xe da di vao thi dong cong 
-    Serial.print("Distance: ");
-    Serial.println(hc.dist());
-    Serial.println("2 - Close ");
+    // Serial.print("Distance: ");
+    // Serial.println(hc.dist());
+    // Serial.println("2 - Close ");
       close_barrier();
       flag_closed_barrier = 1;
     // delay(500);
 
   } else if (detected_car == 0 && flag_closed_barrier == 1 //&& get_in_car == 1 
   &&  is_swiped == 1 ){
-      Serial.println("Car get in completed");
+      // Serial.println("Car get in completed");
       get_in_car = 0 ;
       is_swiped = 0;
       // delay(500);
   }
   else if (detected_car == 1 && flag_closed_barrier == 1 //&& get_in_car == 0 
   &&  is_swiped == 0) { // di tu trong ra va phat hien co xe 
-      Serial.print("Distance: ");
-      Serial.println(hc.dist());
-      Serial.println("3 - open ");  
+      // Serial.print("Distance: ");
+      // Serial.println(hc.dist());
+      // Serial.println("3 - open ");  
       open_barrier();
       flag_closed_barrier = 0;
       get_in_car = 0;
@@ -352,9 +365,9 @@ void loop() {
   }
   else if (detected_car == 0 && flag_closed_barrier == 0 //&& get_in_car == 0 
   &&  is_swiped == 0) { // Xe di ra ngoai roi thi dong cong
-        Serial.print("Distance: ");
-        Serial.println(hc.dist());
-        Serial.println("4 - Close ");  
+        // Serial.print("Distance: ");
+        // Serial.println(hc.dist());
+        // Serial.println("4 - Close ");  
         close_barrier();
         flag_closed_barrier = 1;
         get_in_car = 1;
@@ -393,12 +406,12 @@ void printRfid()
 {
  if (cardNum != '\0')//if string cardNum is not empty, print the value
  {
-    Serial.println("Card found");
-    Serial.print("Cardnumber: ");
+    // Serial.println("Card found");
+    // Serial.print("Cardnumber: ");
     // for (int i=0; i<4; i++){
     //   Serial.println(UID[i]);
     // }
-    Serial.println(cardNum);
+    // Serial.println(cardNum);
     cardNum.remove(0);
   //This is an arduino function.
   //remove the stored value after printing. else the new card value that is read
