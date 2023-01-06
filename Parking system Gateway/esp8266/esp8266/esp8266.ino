@@ -3,8 +3,8 @@
 #include "FirebaseESP8266.h"
 #include "ArduinoJson.h"
 
-#define WIFI_SSID "Nguyen Minh Tien"
-#define WIFI_PASSWORD "0949291518"
+#define WIFI_SSID "Redmi"
+#define WIFI_PASSWORD "99999999"
 
 #define FIREBASE_HOST "apptest-1880b-default-rtdb.firebaseio.com"
 #define FIREBASE_AUTH "0fHtyV9tFd8BXYJMhlAP3MhIz2doCnUYJqSnZPH0"
@@ -16,7 +16,7 @@ String path = "/";
 FirebaseJson json;
 
 
-#include <SoftwareSerial.h>
+// #include <SoftwareSerial.h>
 
 // SoftwareSerial ESP8266_softSerial(D7, D6); // RX:D7, TX:D6
 

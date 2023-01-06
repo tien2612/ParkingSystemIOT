@@ -7,7 +7,7 @@
 
 #include <Servo.h>
 
-#include <SoftwareSerial.h>
+// #include <SoftwareSerial.h>
 
 #include <Wire.h> //Gọi thư viện I2C để sử dụng các thư viện I2C
 #include <LiquidCrystal_I2C.h> //Thư viện LCD I2C
@@ -33,7 +33,7 @@ RF24 myRadio(CE_PIN,CSN_PIN);// 7 : CE and 8 : CSN
 
 const byte addresses[6] = {'x','y','z'};
 
-SoftwareSerial Arduino_softSerial(A2, A3); // RX: 5 - TX: 6
+// SoftwareSerial Arduino_softSerial(A2, A3); // RX: 5 - TX: 6
 
 HCSR04 hc(A0, A1); // //initialisation class HCSR04 (trig pin , echo pin)
 
@@ -178,7 +178,7 @@ void setup() {
   myRadio.startListening();
 
   /////////////////
-  Arduino_softSerial.begin(9600);
+  // Arduino_softSerial.begin(9600);
   
   servo.attach(SERVO_PIN);
   servo.write(90);
@@ -227,7 +227,7 @@ void Transmit_Data_To_NRF(void){
   // Serial.print(send_data_nrf.id);
   // Serial.print("\n");
   
-  Serial.println(send_data_nrf.text);
+  // Serial.println(send_data_nrf.text);
   // Serial.print("\n");
   // myRadio.openWritingPipe(addresses[0]);
   // myRadio.setRetries(15,15);
