@@ -31,6 +31,8 @@ void open_slot(int slot) {
 
     #elif defined(NODE_2)
       servo_s1.attach(servo_slot1);
+      servo_s1.write(750);  //min pulse width for 0 degree
+      delay(215);
       servo_s1.write(1500);  //pulse width for 90 degree
     #endif
   }
@@ -48,16 +50,20 @@ void close_slot(int slot) {
     #elif defined(NODE_2)
       servo_s1.attach(servo_slot1);
       servo_s1.write(2500);  //min pulse width for 0 degree
+      delay(220);
+      servo_s2.write(1500);  //pulse width for 90 degree
     #endif
   } else if (slot == 0) {
     #if defined NODE_1
-    servo_s1.attach(servo_slot1);
-    servo_s1.write(2250);  //max pulse width for around 180 degree
-    delay(220);
-    servo_s1.write(1500);  //pulse width for 90 degree
+      servo_s1.attach(servo_slot1);
+      servo_s1.write(2250);  //max pulse width for around 180 degree
+      delay(220);
+      servo_s1.write(1500);  //pulse width for 90 degree
     #elif defined(NODE_2)
       servo_s1.attach(servo_slot1);
       servo_s1.write(2500);  //min pulse width for 0 degree
+      delay(220);
+      servo_s1.write(1500);  //pulse width for 90 degree
     #endif
   }
 }
